@@ -13,11 +13,8 @@ An offline-first field assistant and territory management dashboard built for 12
 ### Quick Start (Single Command / Clean Machine)
 
 ```bash
-# 1. Install dependencies
-npm install
-
-# 2. Start development server with embedded SQLite database
-npm run dev
+# Clone the repository
+git clone https://github.com/karthick-dev-3/bdm.git
 ```
 
 ### Accessing the Application
