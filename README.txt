@@ -161,14 +161,7 @@ Before writing code, I reviewed the 4 CSV files and the problem statement. In re
    - Why I asked: The source CSVs contained duplicate shops, missing GPS coordinates, blank credit terms, and inconsistent town names (like Madras vs Chennai). I needed to confirm whether to clean the files on disk or handle them safely in application logic.
    - Outcome: Confirmed that source CSV files should never be quietly modified or overwritten on disk. I built runtime normalization for town aliases, non-breaking fallbacks for missing coordinates, and an interactive 1-click Twin Merge tool to resolve duplicate coverage inflation while preserving original audit data.
 
-
-9. ASSUMPTIONS MADE
-
-1. Average Selling Price (ASP): Assumed a standard wholesale iPhone ASP of 75,000 INR for quick purchase order estimation when specific SKU configurations are not entered.
-2. Time Horizon: Assumed the 6-month billing dataset runs from February 2026 to July 2026, with July 2026 being the most recent complete billing month.
-3. Territory Assignments: Assumed each normalized town maps to one of the 12 BDM officers listed in bdms.csv.
-
-10. FUTURE IMPLEMENTATION
+9. FUTURE IMPLEMENTATION
 
 The following roadmap capabilities are planned for upcoming releases to further enhance security, cross-platform access, automated financial operations, and data ingestion flexibility:
 
