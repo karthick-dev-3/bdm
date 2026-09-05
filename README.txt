@@ -27,8 +27,7 @@ Prerequisites: Node.js (v18 or higher) and npm.
    http://localhost:3000
 
 5. Admin Dashboard Login Credentials:
-   - Username: bdmadmin
-   - Password: bdm@2026
+   - **Credentials are managed securely and are not disclosed in this documentation.**
 
 The app runs on port 3000. It includes a native SQLite database (powered by better-sqlite3) stored at data/bdm_sales.db. It automatically seeds tables (bdms, outlets, billing, visits, audits, merges, users, sessions) from the CSV files and auth config on initial launch with zero external configuration required.
 

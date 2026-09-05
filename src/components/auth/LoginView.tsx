@@ -41,9 +41,13 @@ export const LoginView: React.FC = () => {
       <div className="w-full max-w-md relative z-10 flex flex-col gap-6">
         {/* Brand Header */}
         <div className="text-center flex flex-col items-center">
-          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#E68A00] to-[#FF9F0A] flex items-center justify-center shadow-lg shadow-[#E68A00]/20 mb-4 border border-white/20">
-            <ShieldCheck size={30} className="text-white" />
-          </div>
+            <div className="flex items-center gap-2 text-sm text-green-800 bg-green-100 border border-green-400 rounded-md px-3 py-2 mb-2">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
+              I shared the admin login credentials via email.
+            </div>
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#E68A00] to-[#FF9F0A] flex items-center justify-center shadow-lg shadow-[#E68A00]/20 mb-4 border border-white/20">
+              <ShieldCheck size={30} className="text-white" />
+            </div>
           <h1 className="text-2xl font-bold tracking-tight text-white">
             BDM • Admin Gate
           </h1>
@@ -137,6 +141,7 @@ export const LoginView: React.FC = () => {
               )}
             </button>
           </form>
+
         </div>
 
         {/* Footer Security Note */}

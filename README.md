@@ -24,8 +24,7 @@ npm run dev
 - Open your browser at: **[http://localhost:3000](http://localhost:3000)**
 
 ### Admin Dashboard Login Credentials
-- **Username**: `bdmadmin`
-- **Password**: `bdm@2026`
+- **Credentials are managed securely and are not disclosed in this documentation.**
 
 ---
 

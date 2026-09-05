@@ -63,14 +63,7 @@ app.post('/api/auth/login', (req, res) => {
       });
     }
 
-    // Rate limiting check
-    const rateLimit = checkRateLimit(loginId, clientIp);
-    if (rateLimit.isBlocked) {
-      return res.status(429).json({
-        success: false,
-        error: 'Too many failed login attempts. Account temporarily locked. Please try again in 15 minutes.'
-      });
-    }
+    // Rate limiting disabled (removed)
 
     // Lookup user by email or username (case-insensitive)
     const user = db.prepare(`
@@ -83,6 +76,15 @@ app.post('/api/auth/login', (req, res) => {
       return res.status(401).json({
         success: false,
         error: 'Invalid credentials. Please verify your username/email and password.'
+      });
+    }
+
+    // Disallow BDM role from admin login
+    if (user.role && user.role.toLowerCase() === 'bdm') {
+      recordLoginAttempt(loginId, clientIp, false);
+      return res.status(403).json({
+        success: false,
+        error: 'Access denied: BDM users cannot access the admin dashboard.'
       });
     }
 

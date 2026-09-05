@@ -134,13 +134,13 @@ db.exec(`
   );
 `);
 
-// Seed default initial user account (bdmadmin / bdm@2026)
+// Seed default admin user (credentials managed via environment variables)
 export function seedInitialAdminIfEmpty() {
   // Dynamic import to avoid circular dependency
   import('./auth.js').then(({ hashPassword }) => {
     const username = 'bdmadmin';
     const email = 'bdmadmin@bdm.local';
-    const defaultPassword = 'bdm@2026';
+    const defaultPassword = process.env.ADMIN_DEFAULT_PASSWORD || 'ChangeMe123!';
     const passwordHash = hashPassword(defaultPassword);
     const createdAt = new Date().toISOString();
 
@@ -150,12 +150,10 @@ export function seedInitialAdminIfEmpty() {
         INSERT INTO users (email, username, passwordHash, role, name, createdAt)
         VALUES (?, ?, ?, 'admin', 'BDM Administrator', ?)
       `).run(email, username, passwordHash, createdAt);
-      console.log('[SQLite] User account seeded: bdmadmin (Password: bdm@2026)');
+      console.log('[SQLite] User account seeded: bdmadmin (Password set via ADMIN_DEFAULT_PASSWORD env variable)');
     } else {
-      // Update password hash to ensure bdm@2026 is always active
-      db.prepare(`
-        UPDATE users SET passwordHash = ? WHERE id = ?
-      `).run(passwordHash, existing.id);
+      // Preserve existing admin password – do not overwrite on each start
+      // (No password update performed)
     }
   });
 }
