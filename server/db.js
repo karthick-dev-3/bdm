@@ -146,6 +146,11 @@ db.exec(`
     success INTEGER NOT NULL,
     timestamp INTEGER NOT NULL
   );
+
+  CREATE TABLE IF NOT EXISTS revoked_tokens (
+    token TEXT PRIMARY KEY,
+    revokedAt INTEGER NOT NULL
+  );
 `);
 
 // Migrate category_csvs if it still uses legacy single-category PK schema

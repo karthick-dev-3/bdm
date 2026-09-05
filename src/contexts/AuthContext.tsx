@@ -21,14 +21,19 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<AuthUser | null>(() => getStoredUser());
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  // If user profile is already cached in localStorage, avoid blocking dashboard render on refresh
+  const [isLoading, setIsLoading] = useState<boolean>(() => !getStoredUser());
 
   const refreshUser = async () => {
     try {
       const activeUser = await verifyCurrentSession();
-      setUser(activeUser);
-    } catch {
-      setUser(null);
+      if (activeUser) {
+        setUser(activeUser);
+      } else {
+        setUser(null);
+      }
+    } catch (err) {
+      console.warn('[AuthContext] Session refresh error:', err);
     } finally {
       setIsLoading(false);
     }

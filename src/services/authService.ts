@@ -97,9 +97,14 @@ export async function verifyCurrentSession(): Promise<AuthUser | null> {
       headers: { Authorization: `Bearer ${token}` }
     });
 
-    if (!res.ok) {
+    if (res.status === 401 || res.status === 403) {
       clearStoredSession();
       return null;
+    }
+
+    if (!res.ok) {
+      console.warn(`[Auth] Session check returned server status ${res.status}. Preserving cached session.`);
+      return getStoredUser();
     }
 
     const data = await res.json();
@@ -107,10 +112,9 @@ export async function verifyCurrentSession(): Promise<AuthUser | null> {
       localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(data.user));
       return data.user;
     }
-    clearStoredSession();
-    return null;
+    return getStoredUser();
   } catch (err) {
-    console.warn('Error verifying session', err);
+    console.warn('[Auth] Error verifying session over network, preserving cached user', err);
     return getStoredUser();
   }
 }
