@@ -1,0 +1,164 @@
+/**
+ * Centralized Global Design Configuration & Theme (global.css)
+ * Updated to match the dual-tone modern dashboard design (Dark Sidebar + Soft Off-White Canvas + Warm Amber Accents)
+ */
+
+:root {
+  /* 1. Core Colors */
+  --color-primary: #1E1C24;
+  --color-secondary: #F0F1F5;
+  --color-accent: #E68A00;
+  --color-accent-hover: #D07B00;
+  --color-accent-light: rgba(230, 138, 0, 0.12);
+
+  /* Backgrounds & Canvas */
+  --color-canvas-bg: #F4F5F9;
+  --color-card-bg: #FFFFFF;
+  --color-surface: #FFFFFF;
+  --color-surface-subtle: #F8F9FC;
+  --color-sidebar-bg: #1B1920;
+  --color-sidebar-hover: rgba(255, 255, 255, 0.06);
+  --color-sidebar-text: #A0A0AB;
+  --color-sidebar-text-active: #FFA928;
+
+  /* Typography Colors */
+  --color-text-primary: #1E1C24;
+  --color-text-secondary: #6E6D7A;
+  --color-text-muted: #9E9EA7;
+
+  /* Border Colors */
+  --color-border: #EAECF0;
+  --color-border-subtle: rgba(0, 0, 0, 0.05);
+  --color-border-light: #F2F3F7;
+  --color-border-white: #FFFFFF;
+  --color-border-dark: rgba(255, 255, 255, 0.08);
+  --color-border-dark-subtle: rgba(255, 255, 255, 0.05);
+  --color-border-dark-hover: rgba(255, 255, 255, 0.16);
+  --color-border-accent: rgba(230, 138, 0, 0.3);
+  --color-border-accent-strong: var(--color-accent);
+  --color-border-warning: rgba(242, 153, 74, 0.3);
+  --color-border-error: #FFEBEB;
+  --color-border-error-subtle: rgba(235, 87, 87, 0.3);
+  --color-border-success: rgba(39, 174, 96, 0.3);
+  --color-border-purple: rgba(155, 81, 224, 0.3);
+
+  /* Fallback border aliases */
+  --border-subtle: var(--color-border-subtle);
+  --border-default: var(--color-border);
+
+  /* Status Colors */
+  --color-success: #27AE60;
+  --color-success-subtle: rgba(39, 174, 96, 0.12);
+  --color-warning: #F2994A;
+  --color-warning-subtle: rgba(242, 153, 74, 0.12);
+  --color-error: #EB5757;
+  --color-error-subtle: rgba(235, 87, 87, 0.12);
+  --color-purple: #9B51E0;
+  --color-purple-subtle: rgba(155, 81, 224, 0.12);
+  --color-teal: #2EC4B6;
+  --color-teal-subtle: rgba(46, 196, 182, 0.12);
+
+  /* Hero Card Gradient - Matches store-map-badge.png exactly */
+  --gradient-hero: linear-gradient(105deg, #EC960A 0%, #EE9B12 40%, #F4AD1C 100%);
+
+  /* 2. Typography */
+  --font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', 'SF Mono', Consolas, monospace;
+  --font-size-base: 14px;
+  --line-height-base: 1.5;
+
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  --font-size-h1: 1.65rem;   /* 26px */
+  --font-size-h2: 1.35rem;   /* 21.6px */
+  --font-size-h3: 1.1rem;    /* 17.6px */
+  --font-size-body: 0.875rem;/* 14px */
+  --font-size-small: 0.8125rem; /* 13px */
+  --font-size-caption: 0.75rem; /* 12px */
+
+  /* 3. Spacing Scale */
+  --space-4: 4px;
+  --space-8: 8px;
+  --space-12: 12px;
+  --space-16: 16px;
+  --space-20: 20px;
+  --space-24: 24px;
+  --space-32: 32px;
+  --space-40: 40px;
+  --space-48: 48px;
+  --space-64: 64px;
+
+  /* 4. Border Radius */
+  --radius-small: 6px;
+  --radius-medium: 12px;
+  --radius-card: 18px;
+  --radius-large: 22px;
+  --radius-full: 9999px;
+
+  /* 5. Shadows */
+  --shadow-none: none;
+  --shadow-small: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
+  --shadow-card: 0 8px 24px rgba(149, 157, 165, 0.07);
+  --shadow-medium: 0 12px 32px rgba(0, 0, 0, 0.08);
+  --shadow-large: 0 20px 48px rgba(0, 0, 0, 0.12);
+
+  /* 6. Layout */
+  --layout-sidebar-width: 250px;
+  --layout-collapsed-sidebar-width: 72px;
+  --layout-header-height: 68px;
+  --layout-page-padding: 28px;
+  --layout-content-max-width: 1520px;
+  --layout-default-gap: 24px;
+
+  /* 7. Responsive Breakpoints */
+  --breakpoint-mobile: 640px;
+  --breakpoint-tablet: 900px;
+  --breakpoint-desktop: 1200px;
+  --breakpoint-large-desktop: 1440px;
+
+  /* 8. Component Defaults */
+  --btn-height-default: 38px;
+  --btn-radius-default: var(--radius-full);
+  --btn-font-weight-default: var(--font-weight-semibold);
+  --btn-padding-default: 0 var(--space-20);
+
+  --input-height-default: 38px;
+  --input-radius-default: var(--radius-medium);
+  --input-border-default: 1px solid var(--color-border);
+  --input-padding-default: 0 var(--space-16);
+
+  --card-bg-default: var(--color-card-bg);
+  --card-border-default: 1px solid var(--color-border-subtle);
+  --card-radius-default: var(--radius-card);
+  --card-padding-default: 22px;
+  --card-shadow-default: var(--shadow-card);
+
+  --table-row-height-default: 52px;
+  --table-border-default: 1px solid var(--color-border-light);
+
+  /* 9. Icons */
+  --icon-size-small: 14px;
+  --icon-size-default: 18px;
+  --icon-size-large: 22px;
+
+  /* 10. Dashboard Chart Colors */
+  --chart-color-1: #E68A00;
+  --chart-color-2: #2EC4B6;
+  --chart-color-3: #9B51E0;
+  --chart-color-4: #27AE60;
+  --chart-color-5: #F2994A;
+  --chart-positive: var(--color-success);
+  --chart-negative: var(--color-error);
+  --chart-neutral: var(--color-text-muted);
+
+  /* 11. Z-Index Layering */
+  --z-base: 0;
+  --z-sticky: 10;
+  --z-header: 50;
+  --z-dropdown: 100;
+  --z-modal: 200;
+  --z-toast: 300;
+}
