@@ -3,12 +3,24 @@ import path from 'path';
 import fs from 'fs';
 import Papa from 'papaparse';
 
-const dataDir = path.resolve(process.cwd(), 'data');
+const isVercel = Boolean(process.env.VERCEL);
+const dataDir = isVercel ? path.join('/tmp', 'data') : path.resolve(process.cwd(), 'data');
 if (!fs.existsSync(dataDir)) {
   fs.mkdirSync(dataDir, { recursive: true });
 }
 
 const dbPath = path.join(dataDir, 'bdm_sales.db');
+if (isVercel) {
+  const bundledDb = path.resolve(process.cwd(), 'data', 'bdm_sales.db');
+  if (fs.existsSync(bundledDb) && !fs.existsSync(dbPath)) {
+    try {
+      fs.copyFileSync(bundledDb, dbPath);
+    } catch (e) {
+      console.warn('[SQLite] Notice: Copying bundled DB to /tmp:', e);
+    }
+  }
+}
+
 export const db = new Database(dbPath);
 
 // Enable WAL mode for high performance
