@@ -168,18 +168,7 @@ Before writing code, I reviewed the 4 CSV files and the problem statement. In re
 2. Time Horizon: Assumed the 6-month billing dataset runs from February 2026 to July 2026, with July 2026 being the most recent complete billing month.
 3. Territory Assignments: Assumed each normalized town maps to one of the 12 BDM officers listed in bdms.csv.
 
-
-10. WHAT WAS DELIBERATELY LEFT OUT
-
-1. Live Phone GPS Geofencing Check-ins: 
-   Deliberately excluded mandatory GPS coordinate check-ins. In dense retail clusters like Madurai where three shops share a single physical wall, phone GPS accuracy (±15m) cannot distinguish which shop the officer entered, drains battery, and causes permission errors on mobile browsers. Trust is established via storefront photos, 5-point checklist remarks, and purchase order indents.
-2. Direct In-Place Modification of Source CSVs: 
-   The 4 original CSV files in /data are never overwritten or altered on disk, preserving raw audit history.
-3. Forced Mandatory Order Placement: 
-   BDMs are not forced to create an artificial order to complete a visit if the retailer is overstocked, closed, or resolving payment disputes.
-
-
-11. FUTURE IMPLEMENTATION
+10. FUTURE IMPLEMENTATION
 
 The following roadmap capabilities are planned for upcoming releases to further enhance security, cross-platform access, automated financial operations, and data ingestion flexibility:
 
