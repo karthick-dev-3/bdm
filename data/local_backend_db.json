@@ -1,41 +1,6 @@
 {
-  "visits": [
-    {
-      "outletCode": "OA0001",
-      "bdmCode": "BDM006",
-      "visitDate": "2026-09-05",
-      "checkInTimestamp": 1788600481471,
-      "durationMins": 1,
-      "fieldNotes": "",
-      "answers": {
-        "pr_demo_compliance": {
-          "status": "passed",
-          "notes": ""
-        },
-        "pr_model_mix": {
-          "status": "passed",
-          "notes": ""
-        },
-        "pr_financing_readiness": {
-          "status": "passed",
-          "notes": ""
-        },
-        "pr_zero_outages": {
-          "status": "passed",
-          "notes": ""
-        },
-        "pr_replenish_indent": {
-          "status": "passed",
-          "notes": ""
-        }
-      },
-      "counterCondition": "open",
-      "quietReason": "closed",
-      "verifiedCounterPhotoPromptDone": false,
-      "photoVerified": false
-    }
-  ],
+  "visits": [],
   "audits": [],
   "merges": [],
-  "lastUpdated": "2026-09-05T09:28:06.136Z"
+  "lastUpdated": "2026-09-05T00:00:00.000Z"
 }

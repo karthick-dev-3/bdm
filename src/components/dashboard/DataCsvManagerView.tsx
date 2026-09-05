@@ -20,7 +20,7 @@ import {
   Info
 } from 'lucide-react';
 import Papa from 'papaparse';
-import { Dataset, reloadDataset, getDefaultCsvText, getDiskCsvText } from '../../services/dataLoader';
+import { Dataset, reloadDataset, getDefaultCsvText } from '../../services/dataLoader';
 import {
   CsvCategory,
   CsvFileMetadata,
@@ -308,26 +308,26 @@ export const DataCsvManagerView: React.FC<DataCsvManagerViewProps> = ({ dataset,
   const openActiveCategoryViewer = async (cat: CsvCategory) => {
     try {
       const custom = await getCategoryCsv(cat);
-      const diskText = getDiskCsvText(`${cat}.csv`, cat);
-      const csvText = custom !== null ? custom : diskText;
+      const csvText = custom || '';
       const hasContent = !!(csvText && csvText.trim().length > 0);
       const files = metadata[cat] || [];
 
-      const parsed = hasContent
-        ? Papa.parse<Record<string, any>>(csvText, { header: true, skipEmptyLines: true })
-        : { data: [], meta: { fields: [] } };
+      if (!hasContent || files.length === 0) {
+        showNotification(`No CSV files have been uploaded for ${CATEGORY_SCHEMAS[cat].displayName} yet. Please upload a CSV file first.`);
+        return;
+      }
+
+      const parsed = Papa.parse<Record<string, any>>(csvText, { header: true, skipEmptyLines: true });
 
       const displayFileName = files.length > 1
         ? `${files.length} Combined Files (${files.map((f) => f.fileName).join(', ')})`
-        : files.length === 1
-        ? files[0].fileName
-        : (hasContent ? `${cat}.csv (Built-in Default)` : `${cat}.csv (No File / Empty)`);
+        : files[0]?.fileName || `${cat}.csv`;
 
       setActiveViewer({
         title: files.length > 1 ? `${CATEGORY_SCHEMAS[cat].displayName} (Combined Data)` : CATEGORY_SCHEMAS[cat].displayName,
         category: cat,
         fileName: displayFileName,
-        isCustom: files.length > 0,
+        isCustom: true,
         rawText: csvText || '',
         rows: parsed.data || [],
         columns: parsed.meta.fields && parsed.meta.fields.length > 0 ? parsed.meta.fields : CATEGORY_SCHEMAS[cat].requiredHeaders
@@ -931,10 +931,10 @@ export const DataCsvManagerView: React.FC<DataCsvManagerViewProps> = ({ dataset,
                           >
                             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--color-text-muted)' }}>
                               <FileSpreadsheet size={14} />
-                              <span>Built-in default ({cat}.csv)</span>
+                              <span>No CSV files uploaded</span>
                             </div>
                             <span style={{ fontSize: '0.68rem', color: 'var(--color-text-muted)', background: 'var(--color-border)', padding: '2px 6px', borderRadius: '4px' }}>
-                              System Default
+                              No File
                             </span>
                           </div>
                         ) : (
@@ -1043,14 +1043,17 @@ export const DataCsvManagerView: React.FC<DataCsvManagerViewProps> = ({ dataset,
                         type="button"
                         className="btn btn-secondary"
                         onClick={() => openActiveCategoryViewer(cat)}
+                        disabled={files.length === 0}
                         style={{
                           fontSize: '0.78rem',
                           padding: '6px 10px',
                           display: 'inline-flex',
                           alignItems: 'center',
-                          gap: '5px'
+                          gap: '5px',
+                          opacity: files.length === 0 ? 0.45 : 1,
+                          cursor: files.length === 0 ? 'not-allowed' : 'pointer'
                         }}
-                        title="Inspect combined table records"
+                        title={files.length === 0 ? 'Upload a CSV file first to inspect data' : 'Inspect combined table records'}
                       >
                         <Eye size={13} color="var(--color-accent)" />
                         <span>{files.length > 1 ? 'View Combined' : 'View Data'}</span>
@@ -1082,7 +1085,7 @@ export const DataCsvManagerView: React.FC<DataCsvManagerViewProps> = ({ dataset,
                         type="button"
                         className="btn btn-secondary"
                         onClick={() => handleExportCsv(cat)}
-                        title={`Download active ${schema.displayName} CSV`}
+                        title={files.length === 0 ? `Download empty ${schema.displayName} CSV column header template` : `Export active ${schema.displayName} CSV`}
                         style={{
                           fontSize: '0.78rem',
                           padding: '6px 10px',
@@ -1095,7 +1098,7 @@ export const DataCsvManagerView: React.FC<DataCsvManagerViewProps> = ({ dataset,
                         }}
                       >
                         <Download size={13} color="var(--color-accent)" />
-                        <span>Export</span>
+                        <span>{files.length === 0 ? 'Template' : 'Export'}</span>
                       </button>
                     </div>
                   </div>

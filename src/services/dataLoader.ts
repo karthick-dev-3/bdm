@@ -1,12 +1,5 @@
 import Papa from 'papaparse';
 
-// Dynamically discover whatever CSV files currently exist on disk without throwing compile-time errors if a file is removed
-const diskCsvFiles: Record<string, string> = import.meta.glob('../../data/*.csv', {
-  query: '?raw',
-  import: 'default',
-  eager: true
-});
-
 const FALLBACK_HEADERS: Record<CsvCategory, string> = {
   'bdms': 'BDM Code,Name,Territory,Phone,Joined',
   'outlets': 'Outlet Code,Outlet Name,Type,Town,Owner Name,Phone,Onboarded,Credit Days,Latitude,Longitude,Status',
@@ -15,13 +8,6 @@ const FALLBACK_HEADERS: Record<CsvCategory, string> = {
 };
 
 export function getDiskCsvText(fileName: string, category?: CsvCategory): string {
-  for (const [key, content] of Object.entries(diskCsvFiles)) {
-    if (key.endsWith(fileName) || key.includes(fileName)) {
-      if (typeof content === 'string' && content.trim().length > 0) {
-        return content;
-      }
-    }
-  }
   return '';
 }
 
@@ -70,16 +56,7 @@ export interface Dataset {
 }
 
 export function getDefaultCsvText(category: CsvCategory): string {
-  switch (category) {
-    case 'bdms':
-      return getDiskCsvText('bdms.csv', 'bdms') || FALLBACK_HEADERS['bdms'];
-    case 'outlets':
-      return getDiskCsvText('outlets.csv', 'outlets') || FALLBACK_HEADERS['outlets'];
-    case 'billing-monthly':
-      return getDiskCsvText('billing-monthly.csv', 'billing-monthly') || FALLBACK_HEADERS['billing-monthly'];
-    case 'visit-log':
-      return getDiskCsvText('visit-log.csv', 'visit-log') || FALLBACK_HEADERS['visit-log'];
-  }
+  return FALLBACK_HEADERS[category] || '';
 }
 
 let cachedDataset: Dataset | null = null;
@@ -114,10 +91,10 @@ export interface RawCsvTexts {
  * Parses and enriches dataset synchronously from raw strings with zero-crash resiliency
  */
 export function buildDatasetFromRaw(texts?: RawCsvTexts): Dataset {
-  const bdmsCsvText = texts?.bdmsText !== undefined ? texts.bdmsText : getDiskCsvText('bdms.csv', 'bdms');
-  const billingCsvText = texts?.billingText !== undefined ? texts.billingText : getDiskCsvText('billing-monthly.csv', 'billing-monthly');
-  const outletsCsvText = texts?.outletsText !== undefined ? texts.outletsText : getDiskCsvText('outlets.csv', 'outlets');
-  const visitsCsvText = texts?.visitsText !== undefined ? texts.visitsText : getDiskCsvText('visit-log.csv', 'visit-log');
+  const bdmsCsvText = texts?.bdmsText || '';
+  const billingCsvText = texts?.billingText || '';
+  const outletsCsvText = texts?.outletsText || '';
+  const visitsCsvText = texts?.visitsText || '';
 
   const missingFiles: MissingFileInfo[] = [];
 
@@ -557,10 +534,10 @@ export async function loadAndEnrichDatasetAsync(forceReload = false): Promise<Da
     ]);
 
     const dataset = buildDatasetFromRaw({
-      bdmsText: bdmsCustom !== null ? bdmsCustom : getDiskCsvText('bdms.csv', 'bdms'),
-      outletsText: outletsCustom !== null ? outletsCustom : getDiskCsvText('outlets.csv', 'outlets'),
-      billingText: billingCustom !== null ? billingCustom : getDiskCsvText('billing-monthly.csv', 'billing-monthly'),
-      visitsText: visitsCustom !== null ? visitsCustom : getDiskCsvText('visit-log.csv', 'visit-log')
+      bdmsText: bdmsCustom || '',
+      outletsText: outletsCustom || '',
+      billingText: billingCustom || '',
+      visitsText: visitsCustom || ''
     });
 
     cachedDataset = dataset;
