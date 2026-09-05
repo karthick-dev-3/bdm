@@ -112,39 +112,90 @@ export const DataCsvManagerView: React.FC<DataCsvManagerViewProps> = ({ dataset,
     }, 4000);
   };
 
-  // Process selected files from drag-drop or file picker
+  // Process selected files from drag-drop or category-specific file picker
   const processFiles = async (files: FileList | File[], forceCategory?: CsvCategory) => {
     const fileList = Array.from(files);
     if (fileList.length === 0) return;
 
-    const newQueue: QueuedFile[] = [];
+    setIsLoading(true);
+    try {
+      // If uploading specifically for a chosen category (e.g. from "+ Add CSV" on a card)
+      if (forceCategory) {
+        let applied = 0;
+        for (const file of fileList) {
+          const isCsvName = file.name.toLowerCase().endsWith('.csv');
+          const isCsvType = file.type.includes('csv') || file.type.includes('excel') || file.type.includes('plain') || file.type === '';
+          if (!isCsvName && !isCsvType) continue;
 
-    for (let i = 0; i < fileList.length; i++) {
-      const file = fileList[i];
-      const isCsvName = file.name.toLowerCase().endsWith('.csv');
-      const isCsvType = file.type.includes('csv') || file.type.includes('excel') || file.type.includes('plain') || file.type === '';
-      if (!isCsvName && !isCsvType) {
-        continue;
+          try {
+            const rawText = await file.text();
+            const validation = validateCsvContent(rawText, forceCategory, file.name);
+            if (validation.isValid) {
+              await saveCategoryCsv(forceCategory, rawText, file.name, validation.totalRows);
+              applied++;
+            } else {
+              showNotification(`Error in ${file.name}: ${validation.errors[0] || 'Invalid column headers'}`);
+            }
+          } catch (err) {
+            console.error(`Error reading ${file.name}`, err);
+          }
+        }
+
+        if (applied > 0) {
+          await reloadDataset();
+          await loadMeta();
+          if (onDatasetUpdated) onDatasetUpdated();
+          showNotification(`Added ${applied} file${applied > 1 ? 's' : ''} to ${CATEGORY_SCHEMAS[forceCategory].displayName}.`);
+        }
+        return;
       }
 
-      try {
-        const rawText = await file.text();
-        const validation = validateCsvContent(rawText, forceCategory, file.name);
+      // Universal Drag & Drop: auto-categorize and save recognized files directly
+      let autoUploaded = 0;
+      const unassignedOrErrors: QueuedFile[] = [];
 
-        newQueue.push({
-          id: `${file.name}-${Date.now()}-${Math.random()}`,
-          file,
-          rawText,
-          category: validation.category,
-          validation
-        });
-      } catch (err) {
-        console.error(`Error reading file ${file.name}`, err);
+      for (let i = 0; i < fileList.length; i++) {
+        const file = fileList[i];
+        const isCsvName = file.name.toLowerCase().endsWith('.csv');
+        const isCsvType = file.type.includes('csv') || file.type.includes('excel') || file.type.includes('plain') || file.type === '';
+        if (!isCsvName && !isCsvType) continue;
+
+        try {
+          const rawText = await file.text();
+          const validation = validateCsvContent(rawText, undefined, file.name);
+
+          if (validation.isValid && validation.category) {
+            await saveCategoryCsv(validation.category, rawText, file.name, validation.totalRows);
+            autoUploaded++;
+          } else {
+            unassignedOrErrors.push({
+              id: `${file.name}-${Date.now()}-${Math.random()}`,
+              file,
+              rawText,
+              category: validation.category,
+              validation
+            });
+          }
+        } catch (err) {
+          console.error(`Error processing file ${file.name}`, err);
+        }
       }
-    }
 
-    if (newQueue.length > 0) {
-      setQueuedFiles((prev) => [...prev, ...newQueue]);
+      if (autoUploaded > 0) {
+        await reloadDataset();
+        await loadMeta();
+        if (onDatasetUpdated) onDatasetUpdated();
+        showNotification(`Successfully uploaded and applied ${autoUploaded} dataset file${autoUploaded > 1 ? 's' : ''}.`);
+      }
+
+      if (unassignedOrErrors.length > 0) {
+        setQueuedFiles((prev) => [...prev, ...unassignedOrErrors]);
+        showNotification(`${unassignedOrErrors.length} file${unassignedOrErrors.length > 1 ? 's require' : ' requires'} category confirmation in the staged queue below.`);
+      }
+    } catch (err) {
+      console.error('Failed to process upload files', err);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -186,7 +237,7 @@ export const DataCsvManagerView: React.FC<DataCsvManagerViewProps> = ({ dataset,
     setQueuedFiles((prev) => prev.filter((item) => item.id !== id));
   };
 
-  // Commit all queued files to SQLite database (merging multi-file batches per category)
+  // Commit all queued files to database
   const handleCommitUploads = async () => {
     const validItems = queuedFiles.filter((q) => q.category && q.validation.isValid);
     if (validItems.length === 0) return;
@@ -195,26 +246,18 @@ export const DataCsvManagerView: React.FC<DataCsvManagerViewProps> = ({ dataset,
     try {
       let appliedCount = 0;
 
-      // Group items by category to combine/merge multiple files targeting the same category
-      const categoryMap = new Map<CsvCategory, QueuedFile[]>();
       for (const item of validItems) {
-        const cat = item.category!;
-        if (!categoryMap.has(cat)) categoryMap.set(cat, []);
-        categoryMap.get(cat)!.push(item);
-      }
-
-      for (const [category, filesForCat] of categoryMap.entries()) {
-        for (const item of filesForCat) {
-          await saveCategoryCsv(category, item.rawText, item.file.name, item.validation.totalRows);
+        if (item.category) {
+          await saveCategoryCsv(item.category, item.rawText, item.file.name, item.validation.totalRows);
           appliedCount++;
         }
       }
 
       await reloadDataset();
       await loadMeta();
-      setQueuedFiles([]);
+      setQueuedFiles((prev) => prev.filter((q) => !(q.category && q.validation.isValid)));
       if (onDatasetUpdated) onDatasetUpdated();
-      showNotification(`Successfully uploaded and applied ${appliedCount} dataset file${appliedCount > 1 ? 's' : ''} to SQLite database.`);
+      showNotification(`Successfully uploaded and applied ${appliedCount} dataset file${appliedCount > 1 ? 's' : ''}.`);
     } catch (e) {
       console.error('Failed to commit uploads', e);
       alert('An error occurred while saving files to database. Please check file formatting.');
@@ -369,6 +412,10 @@ export const DataCsvManagerView: React.FC<DataCsvManagerViewProps> = ({ dataset,
 
   // Get current active metrics for each category
   const getCategoryStats = (cat: CsvCategory) => {
+    const files = metadata[cat] || [];
+    if (files.length === 0) {
+      return { count: 0, label: CATEGORY_SCHEMAS[cat]?.displayName || cat };
+    }
     switch (cat) {
       case 'bdms':
         return { count: dataset.bdms.length, label: 'BDM Field Officers' };
@@ -454,10 +501,10 @@ export const DataCsvManagerView: React.FC<DataCsvManagerViewProps> = ({ dataset,
               className="btn btn-secondary"
               onClick={() => setIsResetAllModalOpen(true)}
               style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8rem', padding: '8px 14px' }}
-              title="Reset all datasets back to default factory demo baseline"
+              title="Delete all uploaded CSV files and clear database completely"
             >
-              <RotateCcw size={14} />
-              <span>Reset All to Factory Defaults</span>
+              <Trash2 size={14} color="var(--color-error)" />
+              <span>Clear All Datasets</span>
             </button>
           </div>
         </div>
@@ -725,49 +772,13 @@ export const DataCsvManagerView: React.FC<DataCsvManagerViewProps> = ({ dataset,
             Active Core Datasets
           </div>
           <span style={{ fontSize: '0.78rem', color: 'var(--color-text-muted)' }}>
-            {categoriesList.filter((c) => getCategoryStats(c).count > 0).length} of 4 datasets active
+            {categoriesList.filter((c) => (metadata[c]?.length || 0) > 0).length} of 4 datasets active
           </span>
         </div>
 
-        {categoriesList.filter((c) => getCategoryStats(c).count > 0).length === 0 ? (
-          <div
-            className="panel-table"
-            style={{
-              padding: '3rem 2rem',
-              textAlign: 'center',
-              background: 'var(--color-surface)',
-              borderRadius: 'var(--radius-large)',
-              border: '1px dashed var(--color-border)'
-            }}
-          >
-            <div
-              style={{
-                width: '56px',
-                height: '56px',
-                borderRadius: '50%',
-                background: 'rgba(230, 138, 0, 0.1)',
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: 'var(--color-accent)',
-                marginBottom: '1rem'
-              }}
-            >
-              <FileSpreadsheet size={26} />
-            </div>
-            <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--color-text-primary)', marginBottom: '0.35rem' }}>
-              No Active Datasets Loaded
-            </h3>
-            <p style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', maxWidth: '440px', margin: '0 auto', lineHeight: '1.5' }}>
-              There are currently no datasets available. Drag &amp; drop your CSV files into the upload zone above or use "Reset All to Factory Defaults" to restore baseline data.
-            </p>
-          </div>
-        ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1.25rem' }}>
-            {categoriesList
-              .filter((cat) => getCategoryStats(cat).count > 0)
-              .map((cat) => {
-                const schema = CATEGORY_SCHEMAS[cat];
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1.25rem' }}>
+          {categoriesList.map((cat) => {
+            const schema = CATEGORY_SCHEMAS[cat];
                 const files = metadata[cat] || [];
                 const stats = getCategoryStats(cat);
                 const isCustom = files.length > 0;
@@ -856,7 +867,7 @@ export const DataCsvManagerView: React.FC<DataCsvManagerViewProps> = ({ dataset,
                                 whiteSpace: 'nowrap'
                               }}
                             >
-                              Baseline
+                              Empty (0 Files)
                             </span>
                           )}
                         </div>
@@ -895,9 +906,9 @@ export const DataCsvManagerView: React.FC<DataCsvManagerViewProps> = ({ dataset,
                       <div style={{ marginBottom: '1.1rem' }}>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.45rem' }}>
                           <span style={{ fontSize: '0.74rem', fontWeight: 600, color: 'var(--color-text-secondary)' }}>
-                            Attached CSV Files ({files.length > 0 ? files.length : 1}):
+                            Attached CSV Files ({files.length}):
                           </span>
-                          {files.length > 1 && (
+                          {files.length > 0 && (
                             <button
                               type="button"
                               onClick={() => setDeletingCategory(cat)}
@@ -1105,7 +1116,6 @@ export const DataCsvManagerView: React.FC<DataCsvManagerViewProps> = ({ dataset,
                 );
               })}
           </div>
-        )}
       </div>
 
       {/* Hidden file input for single-category upload button */}
@@ -1642,27 +1652,27 @@ export const DataCsvManagerView: React.FC<DataCsvManagerViewProps> = ({ dataset,
               </div>
               <div>
                 <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#1E1C24', margin: 0 }}>
-                  Reset All to Factory Defaults
+                  Delete All Datasets
                 </h3>
                 <div style={{ fontSize: '0.78rem', color: '#6E6D7A', marginTop: '2px' }}>
-                  Clear all custom IndexedDB datasets
+                  Wipe all uploaded CSV files and records completely
                 </div>
               </div>
             </div>
 
             <div
               style={{
-                background: '#FFFBEB',
-                border: '1px solid #FDE68A',
+                background: '#FEF3F2',
+                border: '1px solid #FECDCA',
                 padding: '0.95rem 1.1rem',
                 borderRadius: 'var(--radius-small)',
                 fontSize: '0.84rem',
-                color: '#78350F',
+                color: '#475467',
                 lineHeight: '1.5',
                 marginBottom: '1.4rem'
               }}
             >
-              This action will erase all custom uploaded CSV files across <strong>Retail Outlets, Monthly Billing, BDM Officers, and Visit Logs</strong>, restoring the clean baseline datasets.
+              Are you sure you want to delete all uploaded CSV datasets? This will permanently erase all data across <strong>Retail Outlets, Monthly Billing, Sales Managers, and Visit Logs</strong> and leave the database completely empty (0 files, 0 records).
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>
@@ -1676,11 +1686,23 @@ export const DataCsvManagerView: React.FC<DataCsvManagerViewProps> = ({ dataset,
               </button>
               <button
                 type="button"
-                className="btn btn-primary"
                 onClick={handleApproveResetAll}
-                style={{ fontSize: '0.85rem', fontWeight: 600, padding: '8px 16px' }}
+                style={{
+                  background: '#D92D20',
+                  color: '#FFFFFF',
+                  fontSize: '0.85rem',
+                  fontWeight: 600,
+                  padding: '8px 16px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  borderRadius: 'var(--radius-small)',
+                  border: 'none',
+                  cursor: 'pointer'
+                }}
               >
-                Confirm Factory Reset
+                <Trash2 size={14} />
+                <span>Delete Everything</span>
               </button>
             </div>
           </div>
