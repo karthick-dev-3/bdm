@@ -222,13 +222,12 @@ export const DataHygieneCenter: React.FC<DataHygieneCenterProps> = ({
                   <th>6-Month Invoiced</th>
                   <th>Assigned BDM</th>
                   <th>Hygiene Risk</th>
-                  <th style={{ textAlign: 'right' }}>Master Harmonization</th>
                 </tr>
               </thead>
               <tbody>
                 {pagedDuplicates.length === 0 ? (
                   <tr>
-                    <td colSpan={8} style={{ textAlign: 'center', padding: '2rem', color: 'var(--color-text-muted)' }}>
+                    <td colSpan={7} style={{ textAlign: 'center', padding: '2rem', color: 'var(--color-text-muted)' }}>
                       Zero twin duplicate suspects detected in this territory.
                     </td>
                   </tr>
@@ -256,30 +255,6 @@ export const DataHygieneCenter: React.FC<DataHygieneCenterProps> = ({
                           <AlertTriangle size={12} />
                           <span>Twin Duplicate</span>
                         </span>
-                      </td>
-                      <td style={{ textAlign: 'right' }}>
-                        <button
-                          type="button"
-                          onClick={() => handleOpenMerge(o)}
-                          className="btn btn-secondary"
-                          style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '5px',
-                            padding: '4px 10px',
-                            fontSize: '0.75rem',
-                            fontWeight: 600,
-                            borderRadius: '9999px',
-                            background: 'rgba(230, 138, 0, 0.08)',
-                            color: 'var(--color-accent)',
-                            border: '1px solid var(--color-border-accent)',
-                            cursor: 'pointer'
-                          }}
-                          title="Open 1-Click Master Merge Tool"
-                        >
-                          <GitMerge size={12} />
-                          <span>Merge Twin</span>
-                        </button>
                       </td>
                     </tr>
                   ))
