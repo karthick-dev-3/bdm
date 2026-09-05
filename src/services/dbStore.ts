@@ -6,6 +6,7 @@
 export type CsvCategory = 'bdms' | 'outlets' | 'billing-monthly' | 'visit-log';
 
 export interface CsvFileMetadata {
+  id: string;
   category: CsvCategory;
   fileName: string;
   fileSize: number;
@@ -41,7 +42,7 @@ export async function saveCategoryCsv(
 }
 
 /**
- * Retrieve saved CSV text for a category from SQLite
+ * Retrieve combined saved CSV text for a category from SQLite
  */
 export async function getCategoryCsv(category: CsvCategory): Promise<string | null> {
   try {
@@ -56,24 +57,58 @@ export async function getCategoryCsv(category: CsvCategory): Promise<string | nu
 }
 
 /**
- * Get all stored file metadata from SQLite
+ * Retrieve a specific single CSV file by its ID
  */
-export async function getAllMetadata(): Promise<Record<CsvCategory, CsvFileMetadata | null>> {
+export async function getFileCsv(id: string): Promise<{ fileName: string; csvContent: string } | null> {
   try {
-    const res = await fetch(`${API_BASE}/db/metadata`);
-    if (!res.ok) {
-      return { bdms: null, outlets: null, 'billing-monthly': null, 'visit-log': null };
-    }
+    const res = await fetch(`${API_BASE}/db/file/${id}`);
+    if (!res.ok) return null;
     const data = await res.json();
-    return data.metadata;
+    return data.file ? { fileName: data.file.fileName, csvContent: data.file.csvContent } : null;
   } catch (err) {
-    console.warn('[SQLite] Error fetching DB metadata', err);
-    return { bdms: null, outlets: null, 'billing-monthly': null, 'visit-log': null };
+    console.warn(`[SQLite] Error fetching file ${id}`, err);
+    return null;
   }
 }
 
 /**
- * Delete custom CSV for a category in SQLite (reverts to baseline CSV)
+ * Get all stored file metadata grouped by category from SQLite
+ */
+export async function getAllMetadata(): Promise<Record<CsvCategory, CsvFileMetadata[]>> {
+  try {
+    const res = await fetch(`${API_BASE}/db/metadata`);
+    if (!res.ok) {
+      return { bdms: [], outlets: [], 'billing-monthly': [], 'visit-log': [] };
+    }
+    const data = await res.json();
+    const raw = data.metadata || {};
+    const formatted: Record<CsvCategory, CsvFileMetadata[]> = {
+      bdms: Array.isArray(raw.bdms) ? raw.bdms : (raw.bdms ? [raw.bdms] : []),
+      outlets: Array.isArray(raw.outlets) ? raw.outlets : (raw.outlets ? [raw.outlets] : []),
+      'billing-monthly': Array.isArray(raw['billing-monthly']) ? raw['billing-monthly'] : (raw['billing-monthly'] ? [raw['billing-monthly']] : []),
+      'visit-log': Array.isArray(raw['visit-log']) ? raw['visit-log'] : (raw['visit-log'] ? [raw['visit-log']] : [])
+    };
+    return formatted;
+  } catch (err) {
+    console.warn('[SQLite] Error fetching DB metadata', err);
+    return { bdms: [], outlets: [], 'billing-monthly': [], 'visit-log': [] };
+  }
+}
+
+/**
+ * Delete a specific custom CSV file by ID in SQLite
+ */
+export async function deleteFileCsv(id: string): Promise<void> {
+  const res = await fetch(`${API_BASE}/db/file/${id}`, {
+    method: 'DELETE'
+  });
+  if (!res.ok) {
+    throw new Error(`Failed to delete file ${id} in SQLite database`);
+  }
+}
+
+/**
+ * Delete all custom CSVs for a category in SQLite (reverts to baseline CSV)
  */
 export async function deleteCategoryCsv(category: CsvCategory): Promise<void> {
   const res = await fetch(`${API_BASE}/db/category/${category}`, {

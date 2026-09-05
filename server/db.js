@@ -110,7 +110,8 @@ db.exec(`
   );
 
   CREATE TABLE IF NOT EXISTS category_csvs (
-    category TEXT PRIMARY KEY,
+    id TEXT PRIMARY KEY,
+    category TEXT NOT NULL,
     csvContent TEXT NOT NULL,
     fileName TEXT NOT NULL,
     fileSize INTEGER NOT NULL,
@@ -146,6 +147,32 @@ db.exec(`
     timestamp INTEGER NOT NULL
   );
 `);
+
+// Migrate category_csvs if it still uses legacy single-category PK schema
+try {
+  const tableInfo = db.pragma('table_info(category_csvs)');
+  if (tableInfo.length > 0 && !tableInfo.some((c) => c.name === 'id')) {
+    db.exec(`
+      ALTER TABLE category_csvs RENAME TO old_category_csvs;
+      CREATE TABLE category_csvs (
+        id TEXT PRIMARY KEY,
+        category TEXT NOT NULL,
+        csvContent TEXT NOT NULL,
+        fileName TEXT NOT NULL,
+        fileSize INTEGER NOT NULL,
+        rowCount INTEGER NOT NULL,
+        uploadedAt TEXT NOT NULL,
+        isCustom INTEGER DEFAULT 1
+      );
+      INSERT INTO category_csvs (id, category, csvContent, fileName, fileSize, rowCount, uploadedAt, isCustom)
+        SELECT category AS id, category, csvContent, fileName, fileSize, rowCount, uploadedAt, isCustom FROM old_category_csvs;
+      DROP TABLE old_category_csvs;
+    `);
+    console.log('[SQLite] Migrated category_csvs table to multi-file schema.');
+  }
+} catch (e) {
+  console.warn('[SQLite] Migration check for category_csvs:', e.message);
+}
 
 function hashPasswordInternal(password) {
   const salt = crypto.randomBytes(16).toString('hex');

@@ -1,5 +1,6 @@
 import express from 'express';
 import cors from 'cors';
+import Papa from 'papaparse';
 import { db } from './db.js';
 import {
   hashPassword,
@@ -319,22 +320,24 @@ app.post('/api/outlets/unmerge', (req, res) => {
   }
 });
 
-// Custom Category CSVs & Metadata in SQLite
+// Custom Category CSVs & Metadata in SQLite (Supports Multiple Files per Category)
 app.get('/api/db/metadata', (req, res) => {
   try {
-    const rows = db.prepare('SELECT category, fileName, fileSize, rowCount, uploadedAt, isCustom FROM category_csvs').all();
+    const rows = db.prepare('SELECT id, category, fileName, fileSize, rowCount, uploadedAt, isCustom FROM category_csvs ORDER BY uploadedAt ASC').all();
     const results = {
-      bdms: null,
-      outlets: null,
-      'billing-monthly': null,
-      'visit-log': null
+      bdms: [],
+      outlets: [],
+      'billing-monthly': [],
+      'visit-log': []
     };
     for (const r of rows) {
-      results[r.category] = {
-        ...r,
-        isCustom: Boolean(r.isCustom),
-        version: new Date(r.uploadedAt).getTime()
-      };
+      if (results[r.category]) {
+        results[r.category].push({
+          ...r,
+          isCustom: Boolean(r.isCustom),
+          version: new Date(r.uploadedAt).getTime()
+        });
+      }
     }
     res.json({ success: true, metadata: results });
   } catch (err) {
@@ -345,28 +348,93 @@ app.get('/api/db/metadata', (req, res) => {
 app.get('/api/db/category/:category', (req, res) => {
   try {
     const { category } = req.params;
-    const row = db.prepare('SELECT csvContent FROM category_csvs WHERE category = ?').get(category);
-    res.json({ success: true, csvContent: row ? row.csvContent : null });
+    const rows = db.prepare('SELECT id, fileName, csvContent, rowCount FROM category_csvs WHERE category = ? ORDER BY uploadedAt ASC').all(category);
+    if (rows.length === 0) {
+      return res.json({ success: true, csvContent: null, files: [] });
+    }
+    if (rows.length === 1) {
+      return res.json({ success: true, csvContent: rows[0].csvContent, files: rows });
+    }
+
+    // Merge multiple CSV files seamlessly
+    let combinedHeaders = [];
+    const allRowsMap = new Map();
+    let autoIncKey = 0;
+
+    for (const r of rows) {
+      const parsed = Papa.parse(r.csvContent, { header: true, skipEmptyLines: true });
+      if (parsed.meta.fields && combinedHeaders.length === 0) {
+        combinedHeaders = parsed.meta.fields;
+      } else if (parsed.meta.fields) {
+        for (const f of parsed.meta.fields) {
+          if (!combinedHeaders.includes(f)) combinedHeaders.push(f);
+        }
+      }
+
+      for (const row of parsed.data) {
+        let key = '';
+        if (category === 'bdms') {
+          key = (row['BDM Code'] || row['bdm_code'] || `auto_${++autoIncKey}`).trim();
+        } else if (category === 'outlets') {
+          key = (row['Outlet Code'] || row['outlet_code'] || `auto_${++autoIncKey}`).trim();
+        } else if (category === 'billing-monthly') {
+          const oCode = (row['Outlet Code'] || row['outlet_code'] || '').trim();
+          const m = (row['Month'] || row['month'] || '').trim();
+          key = oCode && m ? `${oCode}_${m}` : `auto_${++autoIncKey}`;
+        } else if (category === 'visit-log') {
+          const vId = (row['Visit ID'] || row['visit_id'] || row['id'] || '').trim();
+          key = vId || `auto_${++autoIncKey}`;
+        } else {
+          key = `auto_${++autoIncKey}`;
+        }
+        allRowsMap.set(key, row);
+      }
+    }
+
+    const mergedData = Array.from(allRowsMap.values());
+    const mergedCsv = Papa.unparse({
+      fields: combinedHeaders,
+      data: mergedData
+    });
+
+    res.json({ success: true, csvContent: mergedCsv, files: rows });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
+// View specific uploaded CSV file
+app.get('/api/db/file/:id', (req, res) => {
+  try {
+    const { id } = req.params;
+    const row = db.prepare('SELECT id, category, fileName, fileSize, rowCount, uploadedAt, isCustom, csvContent FROM category_csvs WHERE id = ?').get(id);
+    if (!row) {
+      return res.status(404).json({ success: false, error: 'File not found' });
+    }
+    res.json({ success: true, file: row });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Upload new CSV file for a category
 app.post('/api/db/category/:category', (req, res) => {
   try {
     const { category } = req.params;
     const { csvContent, fileName, rowCount } = req.body;
     const fileSize = Buffer.byteLength(csvContent || '', 'utf8');
     const uploadedAt = new Date().toISOString();
+    const id = `${category}_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
 
     db.prepare(`
-      INSERT OR REPLACE INTO category_csvs (category, csvContent, fileName, fileSize, rowCount, uploadedAt, isCustom)
-      VALUES (?, ?, ?, ?, ?, ?, 1)
-    `).run(category, csvContent, fileName, fileSize, rowCount, uploadedAt);
+      INSERT INTO category_csvs (id, category, csvContent, fileName, fileSize, rowCount, uploadedAt, isCustom)
+      VALUES (?, ?, ?, ?, ?, ?, ?, 1)
+    `).run(id, category, csvContent, fileName, fileSize, rowCount, uploadedAt);
 
     res.json({
       success: true,
       metadata: {
+        id,
         category,
         fileName,
         fileSize,
@@ -381,11 +449,23 @@ app.post('/api/db/category/:category', (req, res) => {
   }
 });
 
+// Delete specific uploaded CSV file by ID
+app.delete('/api/db/file/:id', (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = db.prepare('DELETE FROM category_csvs WHERE id = ?').run(id);
+    res.json({ success: true, message: 'File deleted successfully', changes: result.changes });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Delete all uploaded CSV files for a category (revert category to baseline)
 app.delete('/api/db/category/:category', (req, res) => {
   try {
     const { category } = req.params;
     db.prepare('DELETE FROM category_csvs WHERE category = ?').run(category);
-    res.json({ success: true, message: `Reverted ${category} to baseline CSV` });
+    res.json({ success: true, message: `Reverted all ${category} files to baseline CSV` });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

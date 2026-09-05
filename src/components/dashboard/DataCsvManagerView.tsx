@@ -27,6 +27,8 @@ import {
   getAllMetadata,
   saveCategoryCsv,
   deleteCategoryCsv,
+  deleteFileCsv,
+  getFileCsv,
   resetAllToDefault,
   getCategoryCsv
 } from '../../services/dbStore';
@@ -67,11 +69,11 @@ interface ActiveViewerData {
 }
 
 export const DataCsvManagerView: React.FC<DataCsvManagerViewProps> = ({ dataset, onDatasetUpdated }) => {
-  const [metadata, setMetadata] = useState<Record<CsvCategory, CsvFileMetadata | null>>({
-    bdms: null,
-    outlets: null,
-    'billing-monthly': null,
-    'visit-log': null
+  const [metadata, setMetadata] = useState<Record<CsvCategory, CsvFileMetadata[]>>({
+    bdms: [],
+    outlets: [],
+    'billing-monthly': [],
+    'visit-log': []
   });
   const [isLoading, setIsLoading] = useState(false);
   const [isDraggingOver, setIsDraggingOver] = useState(false);
@@ -82,6 +84,7 @@ export const DataCsvManagerView: React.FC<DataCsvManagerViewProps> = ({ dataset,
 
   // Deletion Approval Modal State
   const [deletingCategory, setDeletingCategory] = useState<CsvCategory | null>(null);
+  const [deletingFile, setDeletingFile] = useState<CsvFileMetadata | null>(null);
   const [isResetAllModalOpen, setIsResetAllModalOpen] = useState(false);
   const [actionSuccessMsg, setActionSuccessMsg] = useState<string | null>(null);
 
@@ -201,31 +204,10 @@ export const DataCsvManagerView: React.FC<DataCsvManagerViewProps> = ({ dataset,
       }
 
       for (const [category, filesForCat] of categoryMap.entries()) {
-        let combinedCsv = '';
-        let combinedFileName = '';
-        let totalRows = 0;
-
-        if (filesForCat.length === 1) {
-          combinedCsv = filesForCat[0].rawText;
-          combinedFileName = filesForCat[0].file.name;
-          totalRows = filesForCat[0].validation.totalRows;
-        } else {
-          // Multiple files uploaded for the same category! Merge them into a single consolidated CSV
-          let merged = filesForCat[0].rawText;
-          const names = [filesForCat[0].file.name];
-          for (let i = 1; i < filesForCat.length; i++) {
-            const res = mergeCsvRecords(merged, filesForCat[i].rawText, category, 'merge');
-            merged = res.mergedCsv;
-            names.push(filesForCat[i].file.name);
-          }
-          const parsed = Papa.parse(merged, { header: true, skipEmptyLines: true });
-          combinedCsv = merged;
-          combinedFileName = names.length <= 2 ? names.join(' + ') : `${names[0]} (+${names.length - 1} files)`;
-          totalRows = parsed.data.length;
+        for (const item of filesForCat) {
+          await saveCategoryCsv(category, item.rawText, item.file.name, item.validation.totalRows);
+          appliedCount++;
         }
-
-        await saveCategoryCsv(category, combinedCsv, combinedFileName, totalRows);
-        appliedCount += filesForCat.length;
       }
 
       await reloadDataset();
@@ -241,7 +223,27 @@ export const DataCsvManagerView: React.FC<DataCsvManagerViewProps> = ({ dataset,
     }
   };
 
-  // Approve and execute deletion of a custom category CSV
+  // Approve and execute deletion of a specific uploaded CSV file
+  const handleApproveDeleteFile = async () => {
+    if (!deletingFile) return;
+    const file = deletingFile;
+    setDeletingFile(null);
+    setIsLoading(true);
+
+    try {
+      await deleteFileCsv(file.id);
+      await reloadDataset();
+      await loadMeta();
+      if (onDatasetUpdated) onDatasetUpdated();
+      showNotification(`File "${file.fileName}" removed from ${CATEGORY_SCHEMAS[file.category].displayName}.`);
+    } catch (e) {
+      console.error('Failed to delete file', e);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Approve and execute deletion of all custom CSVs for a category
   const handleApproveDelete = async () => {
     if (!deletingCategory) return;
     const cat = deletingCategory;
@@ -253,7 +255,7 @@ export const DataCsvManagerView: React.FC<DataCsvManagerViewProps> = ({ dataset,
       await reloadDataset();
       await loadMeta();
       if (onDatasetUpdated) onDatasetUpdated();
-      showNotification(`Custom ${CATEGORY_SCHEMAS[cat].displayName} removed. Reverted to factory baseline data.`);
+      showNotification(`All custom files for ${CATEGORY_SCHEMAS[cat].displayName} removed. Reverted to factory baseline data.`);
     } catch (e) {
       console.error('Failed to delete category CSV', e);
     } finally {
@@ -279,6 +281,29 @@ export const DataCsvManagerView: React.FC<DataCsvManagerViewProps> = ({ dataset,
     }
   };
 
+  // View a specific single uploaded CSV file
+  const openSingleFileViewer = async (fileMeta: CsvFileMetadata) => {
+    try {
+      const fileData = await getFileCsv(fileMeta.id);
+      const csvText = fileData ? fileData.csvContent : '';
+      const parsed = csvText
+        ? Papa.parse<Record<string, any>>(csvText, { header: true, skipEmptyLines: true })
+        : { data: [], meta: { fields: [] } };
+
+      setActiveViewer({
+        title: `${fileMeta.fileName} (${CATEGORY_SCHEMAS[fileMeta.category].displayName})`,
+        category: fileMeta.category,
+        fileName: fileMeta.fileName,
+        isCustom: true,
+        rawText: csvText,
+        rows: parsed.data || [],
+        columns: parsed.meta.fields && parsed.meta.fields.length > 0 ? parsed.meta.fields : CATEGORY_SCHEMAS[fileMeta.category].requiredHeaders
+      });
+    } catch (e) {
+      console.error('Failed to load file for viewing', e);
+    }
+  };
+
   // Open dataset viewer for either an active category or a queued file (Top 10 Previews)
   const openActiveCategoryViewer = async (cat: CsvCategory) => {
     try {
@@ -286,17 +311,23 @@ export const DataCsvManagerView: React.FC<DataCsvManagerViewProps> = ({ dataset,
       const diskText = getDiskCsvText(`${cat}.csv`, cat);
       const csvText = custom !== null ? custom : diskText;
       const hasContent = !!(csvText && csvText.trim().length > 0);
-      const meta = metadata[cat];
+      const files = metadata[cat] || [];
 
       const parsed = hasContent
         ? Papa.parse<Record<string, any>>(csvText, { header: true, skipEmptyLines: true })
         : { data: [], meta: { fields: [] } };
 
+      const displayFileName = files.length > 1
+        ? `${files.length} Combined Files (${files.map((f) => f.fileName).join(', ')})`
+        : files.length === 1
+        ? files[0].fileName
+        : (hasContent ? `${cat}.csv (Built-in Default)` : `${cat}.csv (No File / Empty)`);
+
       setActiveViewer({
-        title: CATEGORY_SCHEMAS[cat].displayName,
+        title: files.length > 1 ? `${CATEGORY_SCHEMAS[cat].displayName} (Combined Data)` : CATEGORY_SCHEMAS[cat].displayName,
         category: cat,
-        fileName: meta?.fileName || (hasContent ? `${cat}.csv (Built-in Default)` : `${cat}.csv (No File / Empty)`),
-        isCustom: !!meta?.isCustom,
+        fileName: displayFileName,
+        isCustom: files.length > 0,
         rawText: csvText || '',
         rows: parsed.data || [],
         columns: parsed.meta.fields && parsed.meta.fields.length > 0 ? parsed.meta.fields : CATEGORY_SCHEMAS[cat].requiredHeaders
@@ -732,14 +763,14 @@ export const DataCsvManagerView: React.FC<DataCsvManagerViewProps> = ({ dataset,
             </p>
           </div>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(290px, 1fr))', gap: '1.25rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1.25rem' }}>
             {categoriesList
               .filter((cat) => getCategoryStats(cat).count > 0)
               .map((cat) => {
                 const schema = CATEGORY_SCHEMAS[cat];
-                const meta = metadata[cat];
+                const files = metadata[cat] || [];
                 const stats = getCategoryStats(cat);
-                const isCustom = !!meta?.isCustom;
+                const isCustom = files.length > 0;
 
                 return (
                   <div
@@ -757,7 +788,7 @@ export const DataCsvManagerView: React.FC<DataCsvManagerViewProps> = ({ dataset,
                     }}
                   >
                     <div>
-                      {/* Card Header & Status Badge & Top-Right Delete Icon */}
+                      {/* Card Header & Status Badge */}
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem', marginBottom: '0.85rem' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: 0, flex: 1 }}>
                           <div
@@ -791,57 +822,27 @@ export const DataCsvManagerView: React.FC<DataCsvManagerViewProps> = ({ dataset,
                           </span>
                         </div>
 
-                        {/* Top Right Actions: Badge + Delete Icon */}
+                        {/* Top Right Actions: Badge */}
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', flexShrink: 0 }}>
                           {isCustom ? (
-                            <>
-                              <span
-                                style={{
-                                  fontSize: '0.68rem',
-                                  fontWeight: 600,
-                                  padding: '3px 8px',
-                                  borderRadius: '6px',
-                                  background: 'rgba(230, 138, 0, 0.12)',
-                                  color: '#d97706',
-                                  border: '1px solid rgba(230, 138, 0, 0.3)',
-                                  whiteSpace: 'nowrap',
-                                  display: 'inline-flex',
-                                  alignItems: 'center',
-                                  gap: '4px'
-                                }}
-                              >
-                                <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#d97706', display: 'inline-block' }} />
-                                <span>Custom DB</span>
-                              </span>
-                              <button
-                                type="button"
-                                onClick={() => setDeletingCategory(cat)}
-                                title={`Delete custom ${schema.displayName} dataset`}
-                                style={{
-                                  width: '26px',
-                                  height: '26px',
-                                  borderRadius: '6px',
-                                  border: '1px solid rgba(239, 68, 68, 0.25)',
-                                  background: 'rgba(239, 68, 68, 0.06)',
-                                  color: 'var(--color-error)',
-                                  cursor: 'pointer',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'center',
-                                  transition: 'all 0.15s ease'
-                                }}
-                                onMouseEnter={(e) => {
-                                  e.currentTarget.style.background = 'var(--color-error)';
-                                  e.currentTarget.style.color = '#FFFFFF';
-                                }}
-                                onMouseLeave={(e) => {
-                                  e.currentTarget.style.background = 'rgba(239, 68, 68, 0.06)';
-                                  e.currentTarget.style.color = 'var(--color-error)';
-                                }}
-                              >
-                                <Trash2 size={12} />
-                              </button>
-                            </>
+                            <span
+                              style={{
+                                fontSize: '0.68rem',
+                                fontWeight: 600,
+                                padding: '3px 8px',
+                                borderRadius: '6px',
+                                background: 'rgba(230, 138, 0, 0.12)',
+                                color: '#d97706',
+                                border: '1px solid rgba(230, 138, 0, 0.3)',
+                                whiteSpace: 'nowrap',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '4px'
+                              }}
+                            >
+                              <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#d97706', display: 'inline-block' }} />
+                              <span>{files.length} {files.length === 1 ? 'File' : 'Files'}</span>
+                            </span>
                           ) : (
                             <span
                               style={{
@@ -861,46 +862,168 @@ export const DataCsvManagerView: React.FC<DataCsvManagerViewProps> = ({ dataset,
                         </div>
                       </div>
 
-                      <p style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', lineHeight: '1.45', marginBottom: '1.1rem' }}>
+                      <p style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', lineHeight: '1.45', marginBottom: '1rem' }}>
                         {schema.description}
                       </p>
 
-                      {/* Metadata Box */}
+                      {/* Summary Metrics Box */}
                       <div
                         style={{
                           background: 'var(--color-canvas-bg)',
-                          padding: '0.85rem 1rem',
+                          padding: '0.75rem 0.9rem',
                           borderRadius: 'var(--radius-small)',
-                          marginBottom: '1.25rem',
+                          marginBottom: '1rem',
                           border: '1px solid var(--color-border)'
                         }}
                       >
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.45rem' }}>
-                          <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>Active Records:</span>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem' }}>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>Total Active Records:</span>
                           <span style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--color-text-primary)' }}>
                             {stats.count.toLocaleString('en-IN')}
                           </span>
                         </div>
 
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.45rem' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                           <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>Primary Key:</span>
-                          <span style={{ fontSize: '0.75rem', fontFamily: 'var(--font-mono)', color: 'var(--color-text-secondary)', fontWeight: 500 }}>
+                          <span style={{ fontSize: '0.72rem', fontFamily: 'var(--font-mono)', color: 'var(--color-text-secondary)', fontWeight: 500 }}>
                             {schema.primaryKey.join(' + ')}
                           </span>
                         </div>
+                      </div>
 
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>Active File:</span>
-                          <span
+                      {/* Attached CSV Files List (Displays each CSV separately with its own Delete & View button) */}
+                      <div style={{ marginBottom: '1.1rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.45rem' }}>
+                          <span style={{ fontSize: '0.74rem', fontWeight: 600, color: 'var(--color-text-secondary)' }}>
+                            Attached CSV Files ({files.length > 0 ? files.length : 1}):
+                          </span>
+                          {files.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => setDeletingCategory(cat)}
+                              style={{
+                                background: 'none',
+                                border: 'none',
+                                color: 'var(--color-error)',
+                                fontSize: '0.68rem',
+                                cursor: 'pointer',
+                                padding: 0,
+                                fontWeight: 600
+                              }}
+                            >
+                              Clear All
+                            </button>
+                          )}
+                        </div>
+
+                        {files.length === 0 ? (
+                          <div
                             style={{
-                              fontSize: '0.75rem',
-                              color: isCustom ? 'var(--color-accent)' : 'var(--color-text-secondary)',
-                              fontWeight: 500
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                              padding: '8px 10px',
+                              borderRadius: 'var(--radius-small)',
+                              background: 'var(--color-canvas-bg)',
+                              border: '1px dashed var(--color-border)',
+                              fontSize: '0.75rem'
                             }}
                           >
-                            {meta ? `${meta.fileName} (${(meta.fileSize / 1024).toFixed(1)} KB)` : 'Built-in default CSV'}
-                          </span>
-                        </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--color-text-muted)' }}>
+                              <FileSpreadsheet size={14} />
+                              <span>Built-in default ({cat}.csv)</span>
+                            </div>
+                            <span style={{ fontSize: '0.68rem', color: 'var(--color-text-muted)', background: 'var(--color-border)', padding: '2px 6px', borderRadius: '4px' }}>
+                              System Default
+                            </span>
+                          </div>
+                        ) : (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
+                            {files.map((file) => (
+                              <div
+                                key={file.id}
+                                style={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'space-between',
+                                  gap: '0.5rem',
+                                  padding: '8px 10px',
+                                  borderRadius: 'var(--radius-small)',
+                                  background: '#FFFFFF',
+                                  border: '1px solid rgba(230, 138, 0, 0.25)',
+                                  boxShadow: '0 1px 2px rgba(0,0,0,0.03)'
+                                }}
+                              >
+                                <div style={{ minWidth: 0, flex: 1 }}>
+                                  <div
+                                    style={{
+                                      fontWeight: 600,
+                                      fontSize: '0.78rem',
+                                      color: 'var(--color-text-primary)',
+                                      whiteSpace: 'nowrap',
+                                      overflow: 'hidden',
+                                      textOverflow: 'ellipsis'
+                                    }}
+                                    title={file.fileName}
+                                  >
+                                    {file.fileName}
+                                  </div>
+                                  <div style={{ fontSize: '0.68rem', color: 'var(--color-text-muted)', display: 'flex', gap: '6px', marginTop: '1px' }}>
+                                    <span>{file.rowCount.toLocaleString()} rows</span>
+                                    <span>•</span>
+                                    <span>{(file.fileSize / 1024).toFixed(1)} KB</span>
+                                  </div>
+                                </div>
+
+                                {/* Actions for this specific CSV file */}
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0 }}>
+                                  <button
+                                    type="button"
+                                    onClick={() => openSingleFileViewer(file)}
+                                    title={`View rows in ${file.fileName}`}
+                                    style={{
+                                      padding: '4px 8px',
+                                      borderRadius: '5px',
+                                      border: '1px solid var(--color-border)',
+                                      background: 'var(--color-canvas-bg)',
+                                      color: 'var(--color-text-primary)',
+                                      cursor: 'pointer',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      gap: '4px',
+                                      fontSize: '0.72rem',
+                                      fontWeight: 500
+                                    }}
+                                  >
+                                    <Eye size={12} color="var(--color-accent)" />
+                                    <span>View</span>
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => setDeletingFile(file)}
+                                    title={`Delete ${file.fileName}`}
+                                    style={{
+                                      padding: '4px 8px',
+                                      borderRadius: '5px',
+                                      border: '1px solid rgba(239, 68, 68, 0.3)',
+                                      background: 'rgba(239, 68, 68, 0.06)',
+                                      color: 'var(--color-error)',
+                                      cursor: 'pointer',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      gap: '4px',
+                                      fontSize: '0.72rem',
+                                      fontWeight: 500
+                                    }}
+                                  >
+                                    <Trash2 size={12} />
+                                    <span>Delete</span>
+                                  </button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     </div>
 
@@ -927,13 +1050,13 @@ export const DataCsvManagerView: React.FC<DataCsvManagerViewProps> = ({ dataset,
                           alignItems: 'center',
                           gap: '5px'
                         }}
-                        title="Inspect table records"
+                        title="Inspect combined table records"
                       >
                         <Eye size={13} color="var(--color-accent)" />
-                        <span>View</span>
+                        <span>{files.length > 1 ? 'View Combined' : 'View Data'}</span>
                       </button>
 
-                      {/* Upload/Merge Button */}
+                      {/* Upload/Add Button */}
                       <button
                         type="button"
                         className="btn btn-secondary"
@@ -948,10 +1071,10 @@ export const DataCsvManagerView: React.FC<DataCsvManagerViewProps> = ({ dataset,
                           alignItems: 'center',
                           gap: '5px'
                         }}
-                        title={`Upload or merge CSV file(s) for ${schema.displayName}`}
+                        title={`Upload or add CSV file for ${schema.displayName}`}
                       >
                         <UploadCloud size={13} color="var(--color-accent)" />
-                        <span>Upload</span>
+                        <span>{files.length > 0 ? '+ Add CSV' : 'Upload CSV'}</span>
                       </button>
 
                       {/* Download Button */}
@@ -972,7 +1095,7 @@ export const DataCsvManagerView: React.FC<DataCsvManagerViewProps> = ({ dataset,
                         }}
                       >
                         <Download size={13} color="var(--color-accent)" />
-                        <span>Download</span>
+                        <span>Export</span>
                       </button>
                     </div>
                   </div>
@@ -1243,6 +1366,115 @@ export const DataCsvManagerView: React.FC<DataCsvManagerViewProps> = ({ dataset,
                 style={{ fontSize: '0.82rem', padding: '7px 20px' }}
               >
                 Close Preview
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 6a. Single File Delete Approval Modal (Clean Light Mode) */}
+      {deletingFile && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(15, 23, 42, 0.5)',
+            backdropFilter: 'blur(4px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 10000,
+            padding: '1rem'
+          }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setDeletingFile(null);
+          }}
+        >
+          <div
+            style={{
+              background: '#FFFFFF',
+              color: '#1E1C24',
+              border: '1px solid #EAECF0',
+              borderRadius: 'var(--radius-large)',
+              width: '100%',
+              maxWidth: '490px',
+              padding: '1.75rem',
+              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.12), 0 8px 10px -6px rgba(0, 0, 0, 0.08)',
+              animation: 'fadeIn 0.15s ease-out'
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', marginBottom: '1.2rem' }}>
+              <div
+                style={{
+                  width: '44px',
+                  height: '44px',
+                  borderRadius: '50%',
+                  background: '#FEE4E2',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#D92D20',
+                  flexShrink: 0
+                }}
+              >
+                <AlertTriangle size={24} />
+              </div>
+              <div>
+                <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#1E1C24', margin: 0 }}>
+                  Delete CSV File
+                </h3>
+                <div style={{ fontSize: '0.78rem', color: '#6E6D7A', marginTop: '2px' }}>
+                  {CATEGORY_SCHEMAS[deletingFile.category]?.displayName} • {deletingFile.fileName}
+                </div>
+              </div>
+            </div>
+
+            <div
+              style={{
+                background: '#FEF3F2',
+                padding: '0.95rem 1.1rem',
+                borderRadius: 'var(--radius-small)',
+                border: '1px solid #FECDCA',
+                marginBottom: '1.35rem',
+                fontSize: '0.84rem',
+                color: '#475467',
+                lineHeight: '1.5'
+              }}
+            >
+              Are you sure you want to delete the file <strong style={{ color: '#1E1C24' }}>{deletingFile.fileName}</strong> ({deletingFile.rowCount.toLocaleString()} rows)?
+              <br /><br />
+              <span style={{ color: '#B42318', fontWeight: 600 }}>Effect:</span> This specific file will be removed. If other CSV files exist for this category, they will remain active.
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => setDeletingFile(null)}
+                style={{ fontSize: '0.85rem', padding: '8px 16px' }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleApproveDeleteFile}
+                style={{
+                  background: '#D92D20',
+                  color: '#FFFFFF',
+                  fontSize: '0.85rem',
+                  fontWeight: 600,
+                  padding: '8px 16px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  borderRadius: 'var(--radius-small)',
+                  border: 'none',
+                  cursor: 'pointer',
+                  transition: 'background 0.15s ease'
+                }}
+              >
+                <Trash2 size={14} />
+                <span>Delete File</span>
               </button>
             </div>
           </div>

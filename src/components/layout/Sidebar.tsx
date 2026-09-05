@@ -47,7 +47,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
     const checkCustom = async () => {
       try {
         const meta = await getAllMetadata();
-        const customCount = Object.values(meta).filter((m) => m?.isCustom).length;
+        const customCount = Object.values(meta).reduce(
+          (acc, files) => acc + (Array.isArray(files) ? files.length : (files ? 1 : 0)),
+          0
+        );
         setCustomCsvCount(customCount);
       } catch (e) {
         // silent
