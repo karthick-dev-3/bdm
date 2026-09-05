@@ -75,13 +75,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
   // ALL menus are permanently visible for all accounts.
   const menuItems = [
     { id: 'dashboard' as NavTabId, label: 'Dashboard', icon: LayoutDashboard },
-    { id: 'beat' as NavTabId, label: "Today's Beat", icon: Compass, count: userOutlets.length },
-    { id: 'directory' as NavTabId, label: 'Outlets Directory', icon: Store, count: userOutlets.length },
-    { id: 'revival' as NavTabId, label: 'Revival Playbook', icon: RefreshCw, count: revivalCount },
-    { id: 'performance' as NavTabId, label: 'Performance & Reach', icon: BarChart3 },
-    { id: 'forensics' as NavTabId, label: 'Visit Forensics', icon: ShieldAlert },
-    { id: 'hygiene' as NavTabId, label: 'Data Hygiene', icon: Database, count: hygieneCount },
-    { id: 'data' as NavTabId, label: 'Data & CSV Manager', icon: FileSpreadsheet, count: customCsvCount > 0 ? `${customCsvCount} Custom` : undefined },
+    { id: 'beat' as NavTabId, label: 'Daily Visit Plan', icon: Compass, count: userOutlets.length },
+    { id: 'directory' as NavTabId, label: 'Store Directory', icon: Store, count: userOutlets.length },
+    { id: 'revival' as NavTabId, label: 'Inactive Store Revival', icon: RefreshCw, count: revivalCount },
+    { id: 'performance' as NavTabId, label: 'Sales & Coverage Reports', icon: BarChart3 },
+    { id: 'forensics' as NavTabId, label: 'Visit Verification & Audit', icon: ShieldAlert },
+    { id: 'hygiene' as NavTabId, label: 'Data Quality & Cleanup', icon: Database, count: hygieneCount },
+    { id: 'data' as NavTabId, label: 'Data & File Manager', icon: FileSpreadsheet, count: customCsvCount > 0 ? `${customCsvCount} Custom` : undefined },
   ];
 
   // Territory / Account Options with Clean Labels

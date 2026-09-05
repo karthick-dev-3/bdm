@@ -14,13 +14,13 @@ interface HeaderProps {
 
 const tabDisplayTitles: Record<NavTabId, string> = {
   dashboard: 'Dashboard',
-  beat: 'Field Beat Operations',
-  directory: 'Outlets Directory',
-  revival: 'Dormant Revival Playbook',
-  performance: 'Performance & Reach',
-  forensics: 'Visit Forensics Lab',
-  hygiene: 'Data Quality & Hygiene',
-  data: 'Data & CSV Management'
+  beat: 'Daily Visit Plan',
+  directory: 'Store Directory',
+  revival: 'Inactive Store Revival',
+  performance: 'Sales & Coverage Reports',
+  forensics: 'Visit Verification & Audit',
+  hygiene: 'Data Quality & Cleanup',
+  data: 'Data & File Manager'
 };
 
 export const Header: React.FC<HeaderProps> = ({

@@ -123,11 +123,11 @@ export const DataHygieneCenter: React.FC<DataHygieneCenterProps> = ({
   type HygieneTabId = 'duplicates' | 'merged' | 'missing_coords' | 'blank_fields' | 'aliases';
 
   const tabs: { id: HygieneTabId; label: string; icon: any; count: number }[] = [
-    { id: 'duplicates', label: 'Twin Registrations', icon: Copy, count: duplicates.length },
-    { id: 'merged', label: 'Merged Twins', icon: GitMerge, count: mergedAliases.length },
-    { id: 'missing_coords', label: 'Missing Coordinates', icon: MapPinOff, count: missingCoords.length },
-    { id: 'blank_fields', label: 'Blank Fields & Credit', icon: AlertTriangle, count: blankFieldOutlets.length },
-    { id: 'aliases', label: 'Town Aliases', icon: SpellCheck, count: nonCanonicalTowns.length }
+    { id: 'duplicates', label: 'Duplicate Stores', icon: Copy, count: duplicates.length },
+    { id: 'merged', label: 'Merged Records', icon: GitMerge, count: mergedAliases.length },
+    { id: 'missing_coords', label: 'Missing GPS Location', icon: MapPinOff, count: missingCoords.length },
+    { id: 'blank_fields', label: 'Incomplete Store Details', icon: AlertTriangle, count: blankFieldOutlets.length },
+    { id: 'aliases', label: 'City Name Corrections', icon: SpellCheck, count: nonCanonicalTowns.length }
   ];
 
   const visibleTabs = tabs.filter((t) => t.count > 0);

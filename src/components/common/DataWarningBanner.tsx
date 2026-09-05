@@ -45,7 +45,7 @@ export const DataWarningBanner: React.FC<DataWarningBannerProps> = ({
       <div className="p-3 bg-amber-500/10 border border-amber-500/25 rounded-xl text-xs sm:text-sm text-slate-700 leading-relaxed flex items-center gap-2">
         <Info size={16} className="text-[#E68A00] shrink-0" />
         <span>
-          <strong>Guidance:</strong> To populate or restore data, navigate to the <strong>Data &amp; CSV Manager</strong> tab in the left sidebar and upload the corresponding CSV file(s) ({missingFiles.map((f) => f.fileName).join(', ')}).
+          <strong>Guidance:</strong> To populate or restore data, navigate to the <strong>Data &amp; File Manager</strong> tab in the left sidebar and upload the corresponding CSV file(s) ({missingFiles.map((f) => f.fileName).join(', ')}).
         </span>
       </div>
     </div>

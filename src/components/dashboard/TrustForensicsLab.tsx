@@ -356,7 +356,7 @@ export const TrustForensicsLab: React.FC<TrustForensicsLabProps> = ({ dataset, s
               {driveByVisits.length}
             </div>
             <div style={{ fontSize: '0.84rem', fontWeight: 700, color: 'var(--color-text-primary)', marginTop: '2px' }}>
-              Rapid Drive-By Visits
+              Quick Visits (&lt; 5 mins)
             </div>
             <div style={{ fontSize: '0.74rem', color: 'var(--color-text-muted)', marginTop: '4px', lineHeight: 1.35 }}>
               Logged under 5 mins dwell time. Minimal physical merchandising or consultative depth.
@@ -388,7 +388,7 @@ export const TrustForensicsLab: React.FC<TrustForensicsLabProps> = ({ dataset, s
               {blankRemarksVisits.length}
             </div>
             <div style={{ fontSize: '0.84rem', fontWeight: 700, color: 'var(--color-text-primary)', marginTop: '2px' }}>
-              Blank Field Remarks
+              Visits Without Notes
             </div>
             <div style={{ fontSize: '0.74rem', color: 'var(--color-text-muted)', marginTop: '4px', lineHeight: 1.35 }}>
               Submitted with zero notes or observations. Directly breaches reporting compliance.
@@ -420,14 +420,14 @@ export const TrustForensicsLab: React.FC<TrustForensicsLabProps> = ({ dataset, s
               {ghostVisits.length}
             </div>
             <div style={{ fontSize: '0.84rem', fontWeight: 700, color: 'var(--color-text-primary)', marginTop: '2px' }}>
-              Zero-Billing Sinkholes
+              Visits to Zero-Sales Stores
             </div>
             <div style={{ fontSize: '0.74rem', color: 'var(--color-text-muted)', marginTop: '4px', lineHeight: 1.35 }}>
               Visits to counters that haven't billed a single rupee in 6 months. Wasted bandwidth.
             </div>
           </div>
           <div style={{ fontSize: '0.72rem', color: '#9333EA', fontWeight: 600 }}>
-            {((ghostVisits.length / Math.max(1, userVisits.length)) * 100).toFixed(1)}% ghost targets
+            {((ghostVisits.length / Math.max(1, userVisits.length)) * 100).toFixed(1)}% zero-sales targets
           </div>
         </div>
 
@@ -452,14 +452,14 @@ export const TrustForensicsLab: React.FC<TrustForensicsLabProps> = ({ dataset, s
               {cleanVisits.length}
             </div>
             <div style={{ fontSize: '0.84rem', fontWeight: 700, color: 'var(--color-text-primary)', marginTop: '2px' }}>
-              Compliant Verified Visits
+              Verified Genuine Visits
             </div>
             <div style={{ fontSize: '0.74rem', color: 'var(--color-text-muted)', marginTop: '4px', lineHeight: 1.35 }}>
               Thorough counter sessions with compliant dwell times (≥15m) and substantive notes.
             </div>
           </div>
           <div style={{ fontSize: '0.72rem', color: '#16A34A', fontWeight: 600 }}>
-            {((cleanVisits.length / Math.max(1, userVisits.length)) * 100).toFixed(1)}% trustworthy visits
+            {((cleanVisits.length / Math.max(1, userVisits.length)) * 100).toFixed(1)}% verified genuine
           </div>
         </div>
       </div>
@@ -471,14 +471,14 @@ export const TrustForensicsLab: React.FC<TrustForensicsLabProps> = ({ dataset, s
             <div style={{ display: 'flex', alignItems: 'center', gap: '7px' }}>
               <Radio size={16} color="var(--color-accent)" />
               <h3 style={{ fontSize: '0.94rem', fontWeight: 700, color: 'var(--color-text-primary)', margin: 0 }}>
-                Shared-Wall Proximity Radar (The Madurai Problem)
+                Repeated GPS Locations (Shared Addresses)
               </h3>
               <span className="audit-micro-chip chip-warning">
-                {clusters.length} Anomaly Clusters
+                {clusters.length} Address Clusters
               </span>
             </div>
             <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', marginTop: '3px' }}>
-              Detects retail counters registered at identical coordinates in the master ledger. Physical verification (photos and indents) required.
+              Detects stores registered at identical coordinates in the master ledger. Physical verification (photos and indents) required.
             </div>
           </div>
 
@@ -617,7 +617,7 @@ export const TrustForensicsLab: React.FC<TrustForensicsLabProps> = ({ dataset, s
               onClick={() => setFilterMode('driveby')}
             >
               <Zap size={13} />
-              <span>Drive-By (≤5m)</span>
+              <span>Quick Visits (≤5m)</span>
               {driveByVisits.length > 0 && <span className="fox-tab-count">({driveByVisits.length})</span>}
             </button>
             <button
@@ -626,7 +626,7 @@ export const TrustForensicsLab: React.FC<TrustForensicsLabProps> = ({ dataset, s
               onClick={() => setFilterMode('blank_remarks')}
             >
               <FileQuestion size={13} />
-              <span>Blank Notes</span>
+              <span>Visits Without Notes</span>
               {blankRemarksVisits.length > 0 && <span className="fox-tab-count">({blankRemarksVisits.length})</span>}
             </button>
             <button
@@ -635,7 +635,7 @@ export const TrustForensicsLab: React.FC<TrustForensicsLabProps> = ({ dataset, s
               onClick={() => setFilterMode('ghost_visit')}
             >
               <Ghost size={13} />
-              <span>Ghost Outlets</span>
+              <span>Zero-Sales Stores</span>
               {ghostVisits.length > 0 && <span className="fox-tab-count">({ghostVisits.length})</span>}
             </button>
             <button
@@ -644,7 +644,7 @@ export const TrustForensicsLab: React.FC<TrustForensicsLabProps> = ({ dataset, s
               onClick={() => setFilterMode('clean')}
             >
               <ShieldCheck size={13} />
-              <span>Verified High-Trust</span>
+              <span>Verified Genuine</span>
               {cleanVisits.length > 0 && <span className="fox-tab-count">({cleanVisits.length})</span>}
             </button>
           </div>
@@ -667,9 +667,9 @@ export const TrustForensicsLab: React.FC<TrustForensicsLabProps> = ({ dataset, s
               }}
             >
               <option value="all">All Score Tiers</option>
-              <option value="critical">Critical (&lt; 50)</option>
-              <option value="suspicious">Suspicious (50 - 69)</option>
-              <option value="clean">Verified (70+)</option>
+              <option value="critical">High Risk (&lt; 50)</option>
+              <option value="suspicious">Needs Review (50 - 69)</option>
+              <option value="clean">Verified Genuine (70+)</option>
             </select>
 
             {/* Search */}

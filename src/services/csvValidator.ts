@@ -13,7 +13,7 @@ export interface CategorySchema {
 export const CATEGORY_SCHEMAS: Record<CsvCategory, CategorySchema> = {
   bdms: {
     category: 'bdms',
-    displayName: 'BDM Field Officers',
+    displayName: 'Sales Managers List',
     primaryKey: ['BDM Code'],
     requiredHeaders: ['BDM Code', 'Name', 'Territory'],
     optionalHeaders: ['Phone', 'Joined', 'BDM Name'],
@@ -21,27 +21,27 @@ export const CATEGORY_SCHEMAS: Record<CsvCategory, CategorySchema> = {
   },
   outlets: {
     category: 'outlets',
-    displayName: 'Retail Outlets Master',
+    displayName: 'Store Master List',
     primaryKey: ['Outlet Code'],
     requiredHeaders: ['Outlet Code', 'Outlet Name', 'Type', 'Town'],
     optionalHeaders: ['Owner Name', 'Phone', 'Onboarded', 'Credit Days', 'Assigned BDM Code', 'Assigned BDM Name', 'Latitude', 'Longitude', 'Status'],
-    description: 'Master commercial counter list with geo-coordinates, town assignment, and credit terms.'
+    description: 'Master commercial store list with geo-coordinates, town assignment, and credit terms.'
   },
   'billing-monthly': {
     category: 'billing-monthly',
-    displayName: 'Monthly Billing Records',
+    displayName: 'Monthly Sales Data',
     primaryKey: ['Outlet Code', 'Month'],
     requiredHeaders: ['Outlet Code', 'Month', 'Units', 'Value'],
     optionalHeaders: ['Outlet Name'],
-    description: 'Historical 6-month unit sales and billed value per outlet.'
+    description: 'Historical 6-month unit sales and billed revenue per store.'
   },
   'visit-log': {
     category: 'visit-log',
-    displayName: 'Field Visit Audit Logs',
+    displayName: 'Field Visit History',
     primaryKey: ['Visit ID'],
     requiredHeaders: ['Visit ID', 'Outlet Code', 'BDM Code'],
     optionalHeaders: ['Visit Date', 'Date', 'Outlet Name', 'BDM Name', 'Check In', 'Duration (mins)', 'Purpose', 'Remarks', 'Latitude', 'Longitude'],
-    description: 'Field visit verification logs with remarks, purchase orders, and checklist telemetry.'
+    description: 'Field visit records with notes, orders, and store audit checklists.'
   }
 };
 
