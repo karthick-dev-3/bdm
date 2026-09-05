@@ -192,8 +192,8 @@ The following roadmap capabilities are planned for upcoming releases to further 
      - "Payment_Window" -> Credit Days
      The application previews the mapped dataset, validates required data types, and imports records into the SQLite database seamlessly.
 
-5. Multi-File Batch CSV Upload & Auto-Merge per Category:
-   - Multi-File Upload Support: Allows administrators to upload multiple CSV files simultaneously for any individual dataset category (e.g., Field Visit Audit Logs, Monthly Billing Records, or Retail Outlets Master).
-   - Automated Ingestion & Primary Key Consolidation: Combines separate regional or weekly CSV files into a unified dataset in SQLite, automatically reconciling records by primary key (e.g., Visit ID, Outlet Code) without manual spreadsheet merging or creating duplicates.
+5. In-App Direct Messaging & User Chat System:
+   - Targeted Direct Messaging: Allows administrators and territory managers to send personalized, real-time messages and actionable instructions directly to a specific user (such as an individual BDM or field executive).
+   - In-Dashboard Conversation Hub: A built-in chat interface embedded right inside the web dashboard and mobile app, enabling two-way communication where users can view ongoing message history, reply instantly, and resolve field queries without switching to external messaging apps.
    * Project Example: 
-     Instead of spending hours manually combining weekly field logs in Excel, the Admin can upload two separate CSV files at once: "visits_july_week1.csv" and "visits_july_week2.csv" into the Field Visit Audit Logs category. The system automatically merges the records by "Visit ID", appends new visits, and updates all territory scorecards in the SQLite database instantly.
+     The Sales Admin notices that an outlet in Madurai has been dormant for 45 days and needs urgent attention. Instead of sending an unmonitored external text or phone call, the Admin clicks the BDM's profile in the dashboard and sends a direct message: "Please prioritize visiting Rathna Stores today to check if they need fresh iPhone 15 stock." BDM Karthik instantly sees the message badge in his dashboard, reviews the conversation thread, and replies directly with an on-ground status update.
