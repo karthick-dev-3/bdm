@@ -15,6 +15,15 @@ An offline-first field assistant and territory management dashboard built for 12
 ```bash
 # Clone the repository
 git clone https://github.com/karthick-dev-3/bdm.git
+
+# Change into the project directory
+cd bdm
+
+# Install dependencies
+npm install
+
+# Start the development server
+npm run dev
 ```
 
 ### Accessing the Application
