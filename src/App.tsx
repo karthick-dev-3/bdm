@@ -72,7 +72,7 @@ const AuthenticatedDashboard: React.FC = () => {
       <div className="flex h-screen items-center justify-center bg-[#F4F5F9] text-slate-800">
         <div className="flex items-center gap-3 bg-white px-6 py-4 rounded-2xl shadow-lg border border-slate-200">
           <div className="w-5 h-5 rounded-full border-2 border-amber-500 border-t-transparent animate-spin" />
-          <span className="text-sm font-semibold text-slate-700">Initializing Apple iPhone Commercial Engine...</span>
+          <span className="text-sm font-semibold text-slate-700">Initializing Mobile Commercial Engine...</span>
         </div>
       </div>
     );

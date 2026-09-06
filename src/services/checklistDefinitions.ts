@@ -23,12 +23,12 @@ export const OUTLET_CHECKLISTS: Record<OutletType, { title: string; subtitle: st
         id: 'my_stock_depth',
         category: 'Inventory',
         title: 'Hero SKU Depth & Fast-Mover Cover',
-        description: 'Audit 14-day stock cover for top fast-moving iPhone models (Base & Pro series) to prevent weekend stock-outs.'
+        description: 'Audit 14-day stock cover for top fast-moving mobile models (Base & Pro series) to prevent weekend stock-outs.'
       },
       {
         id: 'my_bay_share',
         category: 'Branding',
-        title: 'Apple Dedicated Bay & Floor Prominence',
+        title: 'Mobile Dedicated Bay & Floor Prominence',
         description: 'Check prime floor visibility, ensure clean uninterrupted branding, and check for competitor brand promoter encroachment.'
       },
       {
@@ -47,15 +47,15 @@ export const OUTLET_CHECKLISTS: Record<OutletType, { title: string; subtitle: st
   },
 
   'Premium Reseller': {
-    title: 'Apple Dedicated Reseller Protocol',
-    subtitle: 'Exclusive Apple destination (Avg ₹10.3L/mo). Brand experience, demo compliance & model mix.',
-    rationale: 'These stores sell Apple exclusively. Their sales velocity depends on immaculate live demo hardware uptime, active consumer financing pitches (EMI/cashbacks), and zero-stockouts on hero Pro/Max colors and storage.',
+    title: 'Mobile Dedicated Reseller Protocol',
+    subtitle: 'Exclusive Mobile destination (Avg ₹10.3L/mo). Brand experience, demo compliance & model mix.',
+    rationale: 'These stores sell Mobile exclusively. Their sales velocity depends on immaculate live demo hardware uptime, active consumer financing pitches (EMI/cashbacks), and zero-stockouts on hero Pro/Max colors and storage.',
     items: [
       {
         id: 'pr_demo_compliance',
         category: 'Branding',
         title: 'Live Demo Device & Visual Merchandising Audit',
-        description: 'Inspect live interactive demo devices (powered on, updated iOS, clean display glass, functioning security tethers).'
+        description: 'Inspect live interactive demo devices (powered on, updated OS, clean display glass, functioning security tethers).'
       },
       {
         id: 'pr_model_mix',
@@ -67,7 +67,7 @@ export const OUTLET_CHECKLISTS: Record<OutletType, { title: string; subtitle: st
         id: 'pr_financing_readiness',
         category: 'Market',
         title: 'Store Staff Financing & Pitch Knowledge',
-        description: 'Verify staff actively pitch Apple trade-in, zero-cost EMI, and instant bank cashbacks to walk-in customers.'
+        description: 'Verify staff actively pitch mobile trade-in, zero-cost EMI, and instant bank cashbacks to walk-in customers.'
       },
       {
         id: 'pr_zero_outages',
@@ -131,13 +131,13 @@ export const OUTLET_CHECKLISTS: Record<OutletType, { title: string; subtitle: st
         id: 'ms_counter_share',
         category: 'Market',
         title: 'Counter Share Defense vs Competing Brands',
-        description: 'Assess Apple share of counter sales vs Samsung, Vivo, and OnePlus; address dealer margin pushback.'
+        description: 'Assess mobile counter sales share vs competing Android brands; address dealer margin pushback.'
       },
       {
         id: 'ms_cashier_display',
         category: 'Branding',
         title: 'Point-of-Sale (POS) & Counter Top Visibility',
-        description: 'Ensure Apple posters and promotional standees occupy high-visibility space next to the primary billing counter.'
+        description: 'Ensure mobile brand posters and promotional standees occupy high-visibility space next to the primary billing counter.'
       },
       {
         id: 'ms_buyback_schemes',

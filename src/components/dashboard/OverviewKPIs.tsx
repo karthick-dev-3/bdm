@@ -56,7 +56,7 @@ export const OverviewKPIs: React.FC<OverviewKPIsProps> = ({
             </div>
           </div>
           <div className="text-xs text-slate-500 mt-2 font-medium">
-            {formatNumberIN(units6M)} iPhones invoiced {isAll ? 'across Tamil Nadu' : `in ${currentBdm?.territory || 'territory'}`}
+            {formatNumberIN(units6M)} Mobiles invoiced {isAll ? 'across Tamil Nadu' : `in ${currentBdm?.territory || 'territory'}`}
           </div>
         </div>
 

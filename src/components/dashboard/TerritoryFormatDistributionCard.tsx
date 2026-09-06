@@ -89,7 +89,7 @@ export const TerritoryFormatDistributionCard: React.FC<TerritoryFormatDistributi
             </div>
 
             <div className="flex justify-between text-[0.68rem] text-slate-400">
-              <span>{fmt.julUnits} iPhones billed</span>
+              <span>{fmt.julUnits} Mobiles billed</span>
               <span>{fmt.pct}% reach</span>
             </div>
           </div>

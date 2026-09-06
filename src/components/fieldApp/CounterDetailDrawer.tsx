@@ -151,12 +151,12 @@ export const CounterDetailDrawer: React.FC<CounterDetailDrawerProps> = ({
   const isCodViolation = isOrderAbove1Lakh && isCodSelected;
 
   const unitPriceOptions: DropdownOption[] = [
-    { value: '62000', label: '₹62,000 (Base iPhone 13/14)' },
-    { value: '68000', label: '₹68,000 (iPhone 14 Plus)' },
+    { value: '62000', label: '₹62,000 (Base Mobile 13/14)' },
+    { value: '68000', label: '₹68,000 (Mobile 14 Plus)' },
     { value: '75000', label: '₹75,000 (Network Avg ASP)' },
-    { value: '79000', label: '₹79,000 (iPhone 15 128GB)' },
-    { value: '94000', label: '₹94,000 (iPhone 15 Plus)' },
-    { value: '129000', label: '₹1,29,000 (iPhone 15 Pro / Max)' }
+    { value: '79000', label: '₹79,000 (Mobile 15 128GB)' },
+    { value: '94000', label: '₹94,000 (Mobile 15 Plus)' },
+    { value: '129000', label: '₹1,29,000 (Mobile 15 Pro / Max)' }
   ];
 
   // COD is retained in the list, but disabled with tooltip when order exceeds ₹1,00,000
@@ -166,7 +166,7 @@ export const CounterDetailDrawer: React.FC<CounterDetailDrawerProps> = ({
       label: 'COD (Cash on Delivery)',
       sublabel: isOrderAbove1Lakh ? 'Disabled for orders > ₹1,00,000' : 'Immediate Cash on Delivery',
       disabled: isOrderAbove1Lakh,
-      disabledTooltip: 'COD is disabled for orders above ₹1,00,000 as per Apple commercial credit policy. Please select credit terms.'
+      disabledTooltip: 'COD is disabled for orders above ₹1,00,000 as per commercial credit policy. Please select credit terms.'
     },
     { value: '15 days', label: '15 Days Credit', sublabel: 'Standard Credit Term' },
     { value: '30 days', label: '30 Days Credit', sublabel: 'Standard Credit Term' },
@@ -574,7 +574,7 @@ export const CounterDetailDrawer: React.FC<CounterDetailDrawerProps> = ({
                     className="w-full py-3 px-4 rounded-2xl border border-dashed border-slate-300 bg-slate-50 hover:bg-slate-100 text-slate-600 text-xs font-medium flex items-center justify-center gap-2 cursor-pointer transition-colors"
                   >
                     <Camera size={16} className="text-[#E68A00]" />
-                    <span>Take or Upload Counter / Apple Bay Photo</span>
+                    <span>Take or Upload Counter / Mobile Bay Photo</span>
                   </button>
                 )}
               </div>
@@ -584,7 +584,7 @@ export const CounterDetailDrawer: React.FC<CounterDetailDrawerProps> = ({
                 <span className="text-[0.7rem] font-bold text-slate-400 uppercase tracking-wider">Visit Notes / Counter Agreements</span>
                 <textarea
                   rows={2}
-                  placeholder="e.g. Owner requested 2 units of iPhone 15 Black on COD, confirmed clearance of June balance..."
+                  placeholder="e.g. Owner requested 2 units of Mobile 15 Black on COD, confirmed clearance of June balance..."
                   className="w-full p-3 rounded-2xl border border-slate-200 bg-white text-xs text-slate-900 outline-none focus:border-[#E68A00] transition-colors resize-none"
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}

@@ -52,7 +52,7 @@ export const LoginView: React.FC = () => {
             BDM • Admin Gate
           </h1>
           <p className="text-xs text-slate-400 mt-1 max-w-xs leading-relaxed">
-            iPhone Commercial Territory Management &amp; Forensic Sales Command Center
+            Mobile Commercial Territory Management &amp; Forensic Sales Command Center
           </p>
         </div>
 

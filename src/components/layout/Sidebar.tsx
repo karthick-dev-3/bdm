@@ -12,7 +12,8 @@ import {
   MapPin,
   Shield,
   FileSpreadsheet,
-  UploadCloud
+  UploadCloud,
+  Smartphone
 } from 'lucide-react';
 import { Dataset } from '../../services/dataLoader';
 import { getAllMetadata } from '../../services/dbStore';
@@ -107,17 +108,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
         isCollapsed ? 'w-[72px] min-w-[72px]' : 'w-[250px] min-w-[250px]'
       }`}
     >
-      {/* 1. Brand Header with Vector Apple SVG */}
+      {/* 1. Brand Header with Smartphone Icon */}
       <div className="h-[68px] px-4 flex items-center justify-between gap-2 shrink-0">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 flex items-center justify-center shrink-0">
-            <svg width="20" height="20" viewBox="0 0 170 170" fill="#FFFFFF" className="block">
-              <path d="M150.37 130.25c-2.45 5.66-5.35 10.87-8.71 15.66-4.58 6.53-8.33 11.05-11.22 13.56-4.48 4.12-9.28 6.23-14.42 6.35-3.69 0-8.14-1.05-13.32-3.18-5.19-2.12-9.97-3.17-14.34-3.17-4.58 0-9.49 1.05-14.75 3.17-5.26 2.13-9.5 3.24-12.74 3.35-4.35.13-9.16-1.9-14.42-6.08-3.69-3.04-7.67-7.87-11.93-14.48-6.19-9.58-11.09-20.9-14.68-33.97-3.6-13.06-5.4-25.13-5.4-36.21 0-14.42 3.63-26.4 10.9-35.95 7.27-9.55 16.32-14.46 27.15-14.73 4.88 0 10.45 1.27 16.71 3.82 6.26 2.54 10.37 3.82 12.33 3.82 1.63 0 5.92-1.35 12.87-4.04 6.95-2.69 12.8-3.9 17.57-3.64 13.55.76 24.36 5.56 32.42 14.42-11.93 7.27-17.78 17.2-17.56 29.77.22 9.87 4.04 18.06 11.46 24.58 7.42 6.52 16.27 10.22 26.56 11.11-2.29 7.07-5.18 14.53-8.67 22.38zM119.22 33.02c0-7.27 2.61-14.15 7.82-20.65 5.21-6.5 11.69-10.74 19.45-12.37.22 1.41.33 2.71.33 3.91 0 7.38-2.73 14.43-8.19 21.13-5.46 6.7-12.1 11.11-19.93 12.24-.32-1.52-.48-2.94-.48-4.26z" />
-            </svg>
+          <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center shrink-0 text-[#FFA928]">
+            <Smartphone size={20} />
           </div>
           {!isCollapsed && (
             <div className="flex flex-col">
-              <span className="text-[1.02rem] font-bold text-white tracking-tight">Apple TN Sales</span>
+              <span className="text-[1.02rem] font-bold text-white tracking-tight">Mobile TN Sales</span>
               <span className="text-[0.66rem] text-[#A0A0AB] uppercase tracking-wider font-medium">
                 {isPrimaryAccount ? 'Central Command' : `${currentBdm ? currentBdm.territory : 'Active'} Territory`}
               </span>

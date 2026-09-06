@@ -1,6 +1,6 @@
 /**
  * Core Data Models & TypeScript Definitions
- * Designed for Apple iPhone Distribution Network in Tamil Nadu
+ * Designed for Mobile Distribution Network in Tamil Nadu
  */
 
 export type OutletType = 'Multi-Yard' | 'Premium Reseller' | 'General Trade' | 'Mobile Specialist';

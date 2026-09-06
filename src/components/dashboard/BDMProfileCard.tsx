@@ -60,7 +60,7 @@ export const BDMProfileCard: React.FC<BDMProfileCardProps> = ({ selectedBdmCode,
           <Phone size={15} />
         </a>
         <a
-          href={isPrimary ? "mailto:central.ops@appletn.com" : `mailto:${currentBdm.code.toLowerCase()}@appletn.com`}
+          href={isPrimary ? "mailto:central.ops@mobiletn.com" : `mailto:${currentBdm.code.toLowerCase()}@mobiletn.com`}
           className="w-9 h-9 rounded-full bg-[#1B1920] hover:bg-[#E68A00] text-white flex items-center justify-center transition-all hover:-translate-y-0.5"
           title="Send Official Email"
         >
@@ -72,7 +72,7 @@ export const BDMProfileCard: React.FC<BDMProfileCardProps> = ({ selectedBdmCode,
       <div className="flex flex-col gap-2.5 text-xs">
         <div className="flex items-center justify-between">
           <span className="text-slate-400">Company</span>
-          <span className="font-semibold text-slate-800">Apple TN Distribution</span>
+          <span className="font-semibold text-slate-800">Mobile TN Distribution</span>
         </div>
         <div className="flex items-center justify-between">
           <span className="text-slate-400">Assigned Beat</span>

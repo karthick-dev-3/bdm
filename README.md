@@ -1,6 +1,6 @@
 # BDM Field Visit Application & Admin Dashboard
 
-An offline-first field assistant and territory management dashboard built for 12 Business Development Managers (BDMs) distributing Apple iPhones across retail outlets in Tamil Nadu.
+An offline-first field assistant and territory management dashboard built for 12 Business Development Managers (BDMs) distributing mobiles across retail outlets in Tamil Nadu.
 
 ---
 

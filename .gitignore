@@ -41,3 +41,6 @@ Thumbs.db
 *.sln
 *.sw?
 .agents/
+
+# Video record & local audit notes (do not push to GitHub)
+video-record.txt

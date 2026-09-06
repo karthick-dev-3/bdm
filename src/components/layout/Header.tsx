@@ -76,7 +76,7 @@ export const Header: React.FC<HeaderProps> = ({
           <div>
             <h1 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight leading-tight">{pageTitle}</h1>
             <div className="flex items-center gap-1.5 text-[0.68rem] text-slate-400 font-medium">
-              <span>Apple iPhone Retail Intelligence</span>
+              <span>Mobile Retail Intelligence</span>
               <span>•</span>
               <span className="text-amber-600 font-semibold">{selectedBdmName}</span>
             </div>
